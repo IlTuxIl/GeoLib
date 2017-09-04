@@ -3,8 +3,10 @@
 ////
 
 #include <cassert>
-#include "../src/Vector.h"
 #include <iostream>
+#include "../src/Vector.h"
+#include "../src/Mesh.h"
+
 
 void constructor(){
     vector2 v11;
@@ -82,8 +84,18 @@ void op(){
 
 }
 
+void load(){
+    Mesh m;
+    assert(m.loadOFF("test/queen.off"));
+
+    std::cout << m.getNbVertex() << ' ' << m.getNbFaces() << std::endl;
+    std::cout << m.getVertex(48338) << std::endl;
+    std::cout << m.getFaces(1)[2] << std::endl;
+}
+
 int main(){
     constructor();
     op();
+    //load();
     return 0;
 }
