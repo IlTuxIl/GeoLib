@@ -13,7 +13,7 @@ public:
 
     float x,y;
 
-    vector2(float, float );
+    vector2(float x = 0, float y = 0);
     vector2(const vector2&);
 
     vector2 operator+(const vector2&);
@@ -21,7 +21,8 @@ public:
     vector2 operator*(float);
     vector2 operator/(float);
     vector2 operator=(const vector2&);
-    std::ostream& operator<< (std::ostream&);
+    bool operator==(const vector2&);
+    friend std::ostream& operator<< (std::ostream&, const vector2&);
 
     float dot(const vector2&);
     float length();
@@ -35,7 +36,7 @@ public:
 
     float x,y,z;
 
-    vector3(float, float, float);
+    vector3(float x = 0, float y = 0, float z = 0);
     vector3(const vector2&);
     vector3(const vector3&);
 
@@ -44,7 +45,8 @@ public:
     vector3 operator*(float);
     vector3 operator/(float);
     vector3 operator=(const vector3&);
-    std::ostream& operator<< (std::ostream&);
+    bool operator==(const vector3&);
+    friend std::ostream& operator<< (std::ostream&, const vector3&);
 
     float dot(const vector3&);
     vector3 cross(const vector3&);
