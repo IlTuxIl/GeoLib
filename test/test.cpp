@@ -7,7 +7,6 @@
 #include "../src/Vector.h"
 #include "../src/Mesh.h"
 
-
 void constructor(){
     vector2 v11;
     assert(v11.x == 0);
