@@ -7,18 +7,29 @@
 
 #include <vector>
 #include "Vector.h"
+#include "Triangle.h"
 
 class Mesh {
 public:
     bool loadOFF(char*);
 
+    bool saveOFF(char*);
+
     vector3 getVertex(int) const;
+
+    vector3* getVertex();
+
+    Triangle* getTriangle(int);
 
     int* getFaces(int) const;
 
     int getNbVertex() const;
 
     int getNbFaces() const;
+
+    void draw();
+
+    void drawAll();
 
 private:
     vector3* vertex;
