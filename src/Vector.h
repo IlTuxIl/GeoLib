@@ -48,8 +48,8 @@ public:
     bool operator==(const vector3&);
     friend std::ostream& operator<< (std::ostream&, const vector3&);
 
-    float dot(const vector3&);
-    vector3 cross(const vector3&);
+    float dot(const vector3&) const;
+    vector3 cross(const vector3&) const;
     float length();
     float length2();
     vector3 normalize();

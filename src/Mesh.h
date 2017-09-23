@@ -7,7 +7,13 @@
 
 #include <vector>
 #include "Vector.h"
-#include "Triangle.h"
+#include "TriangleTopo.h"
+
+struct couple{
+    int p1,p2;
+    bool operator< (const couple& c2) const
+    {return p1 < c2.p1 || p2 < c2.p2;}
+};
 
 class Mesh {
 public:
@@ -15,11 +21,7 @@ public:
 
     bool saveOFF(char*);
 
-    vector3 getVertex(int) const;
-
-    vector3* getVertex();
-
-    Triangle* getTriangle(int);
+    Sommet& getVertex(int);
 
     int* getFaces(int) const;
 
@@ -27,19 +29,30 @@ public:
 
     int getNbFaces() const;
 
+    TriangleTopo& getTriangles(int index);
+
     void draw();
 
     void drawAll();
 
-private:
-    vector3* vertex;
+    bool appartient(int idTri, int idPoint);
 
+
+    ~Mesh();
+protected:
+    void splitTriangle(int idTri, int idSommet);
+    void linkTriangle(int idNewTriangle, int idOldTriangle, const couple& c);
+
+    std::vector<Sommet> vertex;
     int** faces;
 
     int nbVertex;
-
     int nbFaces;
+
+    std::vector<TriangleTopo> triangles;
+    TriangleTopo infinite;
 };
+
 
 
 #endif //GEOLIB_MESH_H

@@ -4,22 +4,18 @@
 
 #include "Triangle.h"
 
-Triangle::Triangle() {
-
+Triangle::Triangle(int s1, int s2, int s3) {
+    v[0] = s1;
+    v[1] = s2;
+    v[2] = s3;
 }
 
-Triangle::Triangle(const vector3 &vec1, const vector3 &vec2, const vector3 &vec3) {
-    v1 = vec1;
-    v2 = vec2;
-    v3 = vec3;
+int Triangle::getIdSommet(int id) {
+    if(id == -1)
+        return v[2];
+    return v[id%3];
 }
 
-Triangle::Triangle(const Triangle &tri) {
-    v1 = tri.v1;
-    v2 = tri.v2;
-    v3 = tri.v3;
-}
-
-Triangle Triangle::operator=(const Triangle &tri) {
-    return Triangle(tri);
+void Triangle::setIdSommet(int sommet, int index) {
+    v[index%3] = sommet;
 }

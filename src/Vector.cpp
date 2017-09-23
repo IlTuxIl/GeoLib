@@ -103,11 +103,11 @@ bool vector3::operator==(const vector3& vec) {
     return x == vec.x && y == vec.y && z == vec.z;
 }
 
-float vector3::dot(const vector3& vec) {
+float vector3::dot(const vector3& vec) const {
     return x*vec.x + y*vec.y + z*vec.z;
 }
 
-vector3 vector3::cross(const vector3& vec) {
+vector3 vector3::cross(const vector3& vec) const {
     return vector3(y * vec.z - z * vec.y, z * vec.x - x * vec.z, x * vec.y - y * vec.x);
 }
 

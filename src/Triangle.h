@@ -5,16 +5,17 @@
 #ifndef GEOLIB_TRIANGLE_H
 #define GEOLIB_TRIANGLE_H
 
-#include "Vector.h"
+#include "Sommet.h"
 
 class Triangle {
 public:
-    Triangle();
-    Triangle(const vector3& vec1, const vector3& vec2, const vector3& vec3);
-    Triangle(const Triangle& tri);
-    Triangle operator=(const Triangle& tri);
-    vector3 v1, v2, v3;
-};
+    Triangle(){};
+    Triangle(int s1, int s2, int s3);
+    int getIdSommet(int);
+    void setIdSommet(int, int);
 
+protected:
+    int v[3] = {-1, -1, -1};
+};
 
 #endif //GEOLIB_TRIANGLE_H
