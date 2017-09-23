@@ -11,8 +11,9 @@ class Triangle {
 public:
     Triangle(){};
     Triangle(int s1, int s2, int s3);
-    int getIdSommet(int);
+    int getIdSommet(int) const;
     void setIdSommet(int, int);
+    friend std::ostream& operator<< (std::ostream&, const Triangle&);
 
 protected:
     int v[3] = {-1, -1, -1};

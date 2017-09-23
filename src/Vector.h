@@ -46,6 +46,7 @@ public:
     vector3 operator/(float);
     vector3 operator=(const vector3&);
     bool operator==(const vector3&);
+    float& operator[](int);
     friend std::ostream& operator<< (std::ostream&, const vector3&);
 
     float dot(const vector3&) const;

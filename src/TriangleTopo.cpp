@@ -29,3 +29,8 @@ int TriangleTopo::getIndexInTriangle(int idSommet) {
     }
     return -1;
 }
+
+std::ostream &operator<<(std::ostream &os, const TriangleTopo &t) {
+    os << t.getIdSommet(0) << " " << t.getIdSommet(1) << " " << t.getIdSommet(2) << std::endl;
+    return os;
+}

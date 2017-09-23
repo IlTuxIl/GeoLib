@@ -1,10 +1,10 @@
 ////
 //// Created by Julien on 04/09/2017.
 ////
-//
-//#include <cassert>
-//#include <iostream>
-//#include "../src/Triangulation.h"
+
+#include <cassert>
+#include <iostream>
+#include "../src/Triangulation.h"
 //#include "../src/Triangulation.h"
 //#include "../src/Vector.h"
 //#include "../src/Mesh.h"
@@ -102,16 +102,15 @@
 //}
 
 
-//void triangu(){
-//    Triangulation t;
-//    t.loadPoints("test.points");
-//}
-
-
+void triangu(){
+    Triangulation t;
+    t.loadPoints("test.points");
+}
 int main(){
     //constructor();
     //op();
     //load();
-    //triangu();
+    triangu();
+
     return 0;
 }

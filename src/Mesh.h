@@ -23,7 +23,7 @@ public:
 
     Sommet& getVertex(int);
 
-    int* getFaces(int) const;
+    vector3 getFaces(int) const;
 
     int getNbVertex() const;
 
@@ -44,7 +44,7 @@ protected:
     void linkTriangle(int idNewTriangle, int idOldTriangle, const couple& c);
 
     std::vector<Sommet> vertex;
-    int** faces;
+    std::vector<vector3> faces;
 
     int nbVertex;
     int nbFaces;

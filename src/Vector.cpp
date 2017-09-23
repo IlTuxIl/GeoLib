@@ -124,6 +124,19 @@ vector3 vector3::normalize() {
     return vector3(x * k, y * k, z * k);
 }
 
+float& vector3::operator[](int i) {
+    switch(i){
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        default:
+            return x;
+    }
+}
+
 std::ostream& operator<<(std::ostream& os, const vector2& vec){
     os << vec.x << ' ' << vec.y << std::endl;
     return os;

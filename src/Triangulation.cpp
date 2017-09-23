@@ -5,6 +5,10 @@
 #include <iostream>
 #include "Triangulation.h"
 
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
 vertexIterator::vertexIterator(Mesh *_mesh, int startIndex) {
     mesh = _mesh;
     index = startIndex;
@@ -44,6 +48,10 @@ vertexIterator vertexIterator::operator--(int) {
 bool vertexIterator::operator<(const vertexIterator &fi) {
     return index<fi.index;
 }
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 faceIterator::faceIterator(Mesh *_mesh, int startIndex) {
     mesh = _mesh;
@@ -90,6 +98,10 @@ bool faceIterator::operator<(const faceIterator &fi) {
     return index < fi.index;
 }
 
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
 faceIterator Triangulation::faceBegin() {
     return faceIterator(this, 0);
 }
@@ -126,11 +138,10 @@ bool Triangulation::loadPoints(char *filename) {
         return false;
     }
     ifs >> nbVertex;
-    std::cout << nbVertex << std::endl;
     vertex.reserve(nbVertex);
     triangles.reserve(nbVertex);
-    faces = new int*;
-    faces[0] = new int(3);
+    faces.reserve(nbVertex);
+
     for(int i = 0; i < nbVertex; i ++){
         Sommet s;
         ifs >> s.x >> s.y >> s.z;
@@ -141,25 +152,21 @@ bool Triangulation::loadPoints(char *filename) {
 
     //1er Triangle
     if(estTrigo((vertex[0] - vertex[1]), (vertex[0] - vertex[2]))){
-        faces[0][0] = 0;
-        faces[0][1] = 1;
-        faces[0][2] = 2;
+        faces.push_back(vector3(0,1,2));
         TriangleTopo t(0,1,2,1);
         triangles.push_back(t);
-        std::cout << "abc" << std::endl;
     }
     else{
-        faces[0][0] = 0;
-        faces[0][1] = 2;
-        faces[0][2] = 1;
+        faces.push_back(vector3(0,2,1));
         TriangleTopo t(0,2,1,2);
         triangles.push_back(t);
-        std::cout << "acb" << std::endl;
     }
-
+    //tous les autres points
     for(int i = 3; i < nbVertex; i++){
-        if(appartient(0, i)){
-            std::cout << "oui" << std::endl;
+        if(appartient(1, i)){
+            splitTriangle(1, i);
+            std::cout << "check " << faces[0] << faces[1] << faces[2] << std::endl;
+            std::cout << "check " << triangles[0] << triangles[1] << triangles[2] << std::endl;
         }
         else{
             std::cout << "non" << std::endl;
@@ -167,6 +174,11 @@ bool Triangulation::loadPoints(char *filename) {
     }
 
 }
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
 
 vertexCirculator::vertexCirculator(Mesh *_mesh, int _index) {
     mesh = _mesh;
@@ -250,6 +262,10 @@ vertexCirculator vertexCirculator::operator++(int) {
 bool vertexCirculator::operator!=(const vertexCirculator &vc) {
     return curIndex != vc.curIndex;
 }
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 faceCirculator::faceCirculator(Mesh *_mesh, int idSommet) {
     mesh = _mesh;

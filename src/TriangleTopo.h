@@ -18,6 +18,7 @@ public:
     int getId(){return this->id;}
     void setNeighbor(int idtri, int id);
     int getNeighbor(int id);
+    friend std::ostream& operator<< (std::ostream&, const TriangleTopo&);
 
 private:
     int id = -1;

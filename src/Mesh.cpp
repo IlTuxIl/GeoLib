@@ -45,10 +45,7 @@ bool Mesh::loadOFF(char* filename) {
 ////////////////////// INIT (malloc) ///////////////////
     triangles.reserve((unsigned long) nbFaces);
     vertex.reserve((unsigned long) nbFaces);
-    faces = new int*[nbFaces];
-    infinite.setId(0);
-    for(int i = 0; i < nbFaces; i++)
-        faces[i] = new int[3];
+    faces.reserve((unsigned long) nbFaces);
 ////////////////////////////////////////////////////////
 ////////////////////// Lecture vertex et faces /////////
 
@@ -74,8 +71,8 @@ bool Mesh::loadOFF(char* filename) {
         max2 = std::max(id2, id3);
         max3 = std::max(id1, id3);
 
-        faces[i][0] = id1;
-        faces[i][1] = id2;
+        faces[i].x = id1;
+        faces[i].y = id2;
         faces[i][2] = id3;
 
         vertex[id1].setIdTriangle(i+1);
@@ -155,10 +152,9 @@ Sommet& Mesh::getVertex(int id) {
     return vertex[0];
 }
 
-int* Mesh::getFaces(int id) const {
+vector3 Mesh::getFaces(int id) const {
     if(id >= 0 && id < nbFaces)
         return faces[id];
-    return nullptr;
 }
 
 int Mesh::getNbVertex() const {
@@ -176,35 +172,34 @@ TriangleTopo& Mesh::getTriangles(int index) {
 
 void Mesh::draw() {
 
-//    glBegin(GL_TRIANGLES);
+    glBegin(GL_TRIANGLES);
 
     for (int i = 0; i < getNbFaces(); i++) {
-        //glVertex3f(points[i].x, points[i].y, points[i].z);
         int i1, i2, i3;
-        i1 = getFaces(i)[0];
-        i2 = getFaces(i)[1];
-        i3 = getFaces(i)[2];
+        i1 = getFaces(i).x;
+        i2 = getFaces(i).y;
+        i3 = getFaces(i).z;
 
         vector3 v1 = getVertex(i1);
         vector3 v2 = getVertex(i2);
         vector3 v3 = getVertex(i3);
 
-//        glVertex3f(v1.x, v1.y, v1.z);
-//        glVertex3f(v2.x, v2.y, v2.z);
-//        glVertex3f(v3.x, v3.y, v3.z);
+        glVertex3f(v1.x, v1.y, v1.z);
+        glVertex3f(v2.x, v2.y, v2.z);
+        glVertex3f(v3.x, v3.y, v3.z);
     }
 
-//    glEnd();
+    glEnd();
 
 }
 
 void Mesh::drawAll() {
 
-//    glBegin(GL_TRIANGLES);
+    glBegin(GL_TRIANGLES);
 
 //    std::cout << getNbFaces() << std::endl;
     for (int i = 0; i < getNbFaces(); i++) {
-        int tmp = getFaces(i)[0];
+        int tmp = getFaces(i).x;
 
         std::cout << tmp << std::endl;
 
@@ -213,26 +208,22 @@ void Mesh::drawAll() {
 
         for (int j = 0; j < tmp; j++){
             id[j] = getFaces(i)[j];
-        //for(int j = 0; j < tmp; j++)
-            v[j] = getVertex(id[j]);
-        //for(int j = 0; j < tmp; j++)
-//            glVertex3f(v[j].x, v[j].y, v[j].z);
+            for(int j = 0; j < tmp; j++)
+                v[j] = getVertex(id[j]);
+            for(int j = 0; j < tmp; j++)
+                glVertex3f(v[j].x, v[j].y, v[j].z);
         }
     }
 
-//    glEnd();
+    glEnd();
 
 }
 
 Mesh::~Mesh() {
-    for(int i = 0; i < nbFaces; i++){
-        //delete[] faces[i];
-    }
-    //delete[] faces;
 }
 
 bool Mesh::appartient(int idTri, int idPoint) {
-    TriangleTopo t = triangles[idTri];
+    TriangleTopo t = triangles[idTri-1];
     Sommet s1 = getVertex(t.getIdSommet(0));
     Sommet s2 = getVertex(t.getIdSommet(1));
     Sommet s3 = getVertex(t.getIdSommet(2));
@@ -244,6 +235,24 @@ bool Mesh::appartient(int idTri, int idPoint) {
     return a&&b&&c;
 }
 
+//Uniquement si idSommet appartient à idTri
 void Mesh::splitTriangle(int idTri, int idSommet) {
+    TriangleTopo& triangleASplit = triangles[idTri-1];
 
+    vector3 p1, p2;
+    p1.x = idSommet;
+    p1.y = triangleASplit.getIdSommet(1);
+    p1.z = triangleASplit.getIdSommet(2);
+    faces.push_back(p1);
+
+    p2.x = idSommet;
+    p2.y= triangleASplit.getIdSommet(2);
+    p2.z = triangleASplit.getIdSommet(0);
+    faces.push_back(p2);
+
+    faces[idTri-1][2] = idSommet;
+
+    triangles.push_back(TriangleTopo(idSommet, triangleASplit.getIdSommet(1), triangleASplit.getIdSommet(2), triangles.size()));
+    triangles.push_back(TriangleTopo(idSommet, triangleASplit.getIdSommet(2), triangleASplit.getIdSommet(0), triangles.size()));
+    triangleASplit.setIdSommet(idSommet, 2);
 }
