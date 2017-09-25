@@ -3,16 +3,18 @@
 //
 
 #include "Mesh.h"
+#include "Triangulation.h"
 #include <iostream>
 #include <GL/gl.h>
 #include <map>
+#include <cmath>
 
 void Mesh::linkTriangle(int idNewTriangle, int idOldTriangle, const couple& c){
     //std::cout << "check " << idNewTriangle << " " << idOldTriangle << std::endl;
     TriangleTopo* t = &triangles[idOldTriangle-1];
     int s1,s2;
-    s1 = faces[idOldTriangle-1][0];
-    s2 = faces[idOldTriangle-1][1];
+    s1 = triangles[idOldTriangle-1].getIdSommet(0);;
+    s2 = triangles[idOldTriangle-1].getIdSommet(1);
 
     if(s1 == c.p1 || s1 == c.p2){
         if(s2 == c.p1 || s2 == c.p2){
@@ -45,8 +47,6 @@ bool Mesh::loadOFF(char* filename) {
 ////////////////////// INIT ///////////////////
     triangles.reserve((unsigned long) nbFaces);
     vertex.reserve((unsigned long) nbFaces);
-    faces.reserve((unsigned long) nbFaces);
-    infinite.setId(0);
 ////////////////////////////////////////////////////////
 ////////////////////// Lecture vertex et faces /////////
 
@@ -72,15 +72,11 @@ bool Mesh::loadOFF(char* filename) {
         max2 = std::max(id2, id3);
         max3 = std::max(id1, id3);
 
-        faces[i].x = id1;
-        faces[i].y = id2;
-        faces[i][2] = id3;
-
         vertex[id1].setIdTriangle(i+1);
         vertex[id2].setIdTriangle(i+1);
         vertex[id3].setIdTriangle(i+1);
 
-        triangles.push_back(TriangleTopo(faces[i][0], faces[i][1], faces[i][2], i+1));
+        triangles.push_back(TriangleTopo(id1, id2, id3, i+1));
 
         if(map[{min1, max1}] == 0) {
             map[{min1, max1}] = i + 1;
@@ -110,11 +106,11 @@ bool Mesh::loadOFF(char* filename) {
 
     for(int i = 0; i < triangles.size(); i++){
         if(triangles[i].getNeighbor(0) == -1)
-            triangles[i].setNeighbor(infinite.getId(), 0);
+            triangles[i].setNeighbor(0, 0);
         if(triangles[i].getNeighbor(1) == -1)
-            triangles[i].setNeighbor(infinite.getId(), 1);
+            triangles[i].setNeighbor(0, 1);
         if(triangles[i].getNeighbor(2) == -1)
-            triangles[i].setNeighbor(infinite.getId(), 2);
+            triangles[i].setNeighbor(0, 2);
     }
 
     ifs.close();
@@ -140,7 +136,7 @@ bool Mesh::saveOFF(char* filename) {
     }
 
     for(int i = 0; i < nbFaces; i++){
-        ofs << faces[i][0] << ' ' << faces[i][1] << ' ' << faces[i][2] << ' ' << faces[i][3] << std::endl;
+        ofs << triangles[i].getIdSommet(0) << ' ' << triangles[i].getIdSommet(1) << ' ' << triangles[i].getIdSommet(2) << std::endl;
     }
 
     ofs << '\0';
@@ -153,17 +149,12 @@ Sommet& Mesh::getVertex(int id) {
     return vertex[0];
 }
 
-vector3 Mesh::getFaces(int id) const {
-    if(id >= 0 && id < nbFaces)
-        return faces[id];
-}
-
 int Mesh::getNbVertex() const {
     return nbVertex;
 }
 
 int Mesh::getNbFaces() const {
-    return nbFaces;
+    return triangles.size();
 }
 
 TriangleTopo& Mesh::getTriangles(int index) {
@@ -179,9 +170,9 @@ void Mesh::draw() {
 
     for (int i = 0; i < getNbFaces(); i++) {
         int i1, i2, i3;
-        i1 = getFaces(i).x;
-        i2 = getFaces(i).y;
-        i3 = getFaces(i).z;
+        i1 = triangles[i].getIdSommet(0);
+        i2 = triangles[i].getIdSommet(1);
+        i3 = triangles[i].getIdSommet(2);
 
         vector3 v1 = getVertex(i1);
         vector3 v2 = getVertex(i2);
@@ -193,32 +184,6 @@ void Mesh::draw() {
         glVertex3f(v2.x, v2.y, v2.z);
         glVertex3f(v3.x, v3.y, v3.z);
 
-    }
-
-    glEnd();
-
-}
-
-void Mesh::drawAll() {
-
-    glBegin(GL_TRIANGLES);
-
-//    std::cout << getNbFaces() << std::endl;
-    for (int i = 0; i < getNbFaces(); i++) {
-        int tmp = getFaces(i).x;
-
-        std::cout << tmp << std::endl;
-
-        int *id = new int[tmp];
-        vector3 *v = new vector3[tmp];
-
-        for (int j = 0; j < tmp; j++){
-            id[j] = getFaces(i)[j];
-            for(int j = 0; j < tmp; j++)
-                v[j] = getVertex(id[j]);
-            for(int j = 0; j < tmp; j++)
-                glVertex3f(v[j].x, v[j].y, v[j].z);
-        }
     }
 
     glEnd();
@@ -239,14 +204,6 @@ bool Mesh::appartient(int idTri, int idPoint) {
     bool b = (vector3(s2 - s1).cross(vector3(s2 - p))).dot((vector3(s2 - p).cross(vector3(s2 - s3)))) >= 0;
     bool c = (vector3(s3 - s1).cross(vector3(s3 - p))).dot((vector3(s3 - p).cross(vector3(s3 - s2)))) >= 0;
     return a&&b&&c;
-}
-
-int Mesh::appartientMesh(Mesh &m, int idPoint) {
-    for(int i = 1; i < nbFaces + 1; i++){
-        if(appartient(i, idPoint))
-            return i;
-    }
-    return -1;
 }
 
 //Uniquement si idSommet appartient à idTri
@@ -283,18 +240,18 @@ void Mesh::splitTriangle(int idTri, int idSommet) {
     triangleASplit.setNeighbor(triangles.size()+1 ,0);
     triangleASplit.setNeighbor(triangles.size()+2 ,1);
 
-    vector3 p1, p2;
-    p1.x = idSommet;
-    p1.y = triangleASplit.getIdSommet(1);
-    p1.z = triangleASplit.getIdSommet(2);
-    faces.push_back(p1);
-
-    p2.x = idSommet;
-    p2.y= triangleASplit.getIdSommet(2);
-    p2.z = triangleASplit.getIdSommet(0);
-    faces.push_back(p2);
-
-    faces[idTri-1][2] = idSommet;
+//    vector3 p1, p2;
+//    p1.x = idSommet;
+//    p1.y = triangleASplit.getIdSommet(1);
+//    p1.z = triangleASplit.getIdSommet(2);
+//    faces.push_back(p1);
+//
+//    p2.x = idSommet;
+//    p2.y= triangleASplit.getIdSommet(2);
+//    p2.z = triangleASplit.getIdSommet(0);
+//    faces.push_back(p2);
+//
+//    faces[idTri-1][2] = idSommet;
 
     triangles.push_back(triangleB);
     triangles.push_back(triangleC);
@@ -339,12 +296,15 @@ couple getPointsAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
 }
 
 //Tri1 et Tri2 adjacent
-void Mesh::flipTriangle(int idTri1, int idTri2) {
+bool Mesh::flipTriangle(int idTri1, int idTri2) {
     TriangleTopo& tri1 = triangles[idTri1-1];
     TriangleTopo& tri2 = triangles[idTri2-1];
 
     couple arrete1 = getArreteAdjacent(tri1, tri2);
     couple arrete2 = getArreteAdjacent(tri2, tri1);
+
+    if(arrete1.p1 == -1 || arrete2.p1 == -1)
+        return false;
 
     int indexT1 = 3 - arrete1.p1 - arrete1.p2;
     int indexT2 = 3 - arrete2.p1 - arrete2.p2;
@@ -379,4 +339,20 @@ void Mesh::flipTriangle(int idTri1, int idTri2) {
             }
         }
     }
+    return true;
+}
+
+double Mesh::appartientCercle(int idTri, int idPoint) const {
+    TriangleTopo tri = triangles[idTri-1];
+    Sommet s = vertex[idPoint];
+    Sommet p1 = vertex[tri.getIdSommet(0)];
+    Sommet p2 = vertex[tri.getIdSommet(1)];
+    Sommet p3 = vertex[tri.getIdSommet(2)];
+
+    p1.z = pow(p1.x ,2) + pow(p1.y, 2);
+    p2.z = pow(p2.x ,2) + pow(p2.y, 2);
+    p3.z = pow(p3.x ,2) + pow(p3.y, 2);
+    s.z = pow(s.x ,2) + pow(s.y, 2);
+
+    return vector3((p2-p1).cross(p3 - p1)).dot(s-p1);
 }

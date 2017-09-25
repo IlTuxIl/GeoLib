@@ -34,9 +34,9 @@ class vector3 {
 
 public:
 
-    float x,y,z;
+    double x,y,z;
 
-    vector3(float x = 0, float y = 0, float z = 0);
+    vector3(double x = 0, double y = 0, double z = 0);
     vector3(const vector2&);
     vector3(const vector3&);
 
@@ -46,7 +46,7 @@ public:
     vector3 operator/(float);
     vector3 operator=(const vector3&);
     bool operator==(const vector3&);
-    float& operator[](int);
+    double& operator[](int);
     friend std::ostream& operator<< (std::ostream&, const vector3&);
 
     float dot(const vector3&) const;

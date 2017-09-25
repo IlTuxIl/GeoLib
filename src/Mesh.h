@@ -23,7 +23,7 @@ public:
 
     Sommet& getVertex(int);
 
-    vector3 getFaces(int) const;
+//    vector3 getFaces(int) const;
 
     int getNbVertex() const;
 
@@ -33,13 +33,11 @@ public:
 
     void draw();
 
-    void drawAll();
-
     bool appartient(int idTri, int idPoint);
 
-    int appartientMesh(Mesh& m, int idPoint);
+    bool flipTriangle(int tri1, int tri2);
 
-    void flipTriangle(int tri1, int tri2);
+    double appartientCercle(int idTri, int s) const;
 
     ~Mesh();
 protected:
@@ -47,13 +45,11 @@ protected:
     void linkTriangle(int idNewTriangle, int idOldTriangle, const couple& c);
 
     std::vector<Sommet> vertex;
-    std::vector<vector3> faces;
 
     int nbVertex;
     int nbFaces;
 
     std::vector<TriangleTopo> triangles;
-    TriangleTopo infinite;
 };
 
 

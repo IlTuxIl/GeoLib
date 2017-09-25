@@ -61,7 +61,7 @@ vector2 vector2::normalize() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vector3::vector3(float x_, float y_, float z_) {
+vector3::vector3(double x_, double y_, double z_) {
     x = x_;
     y = y_;
     z = z_;
@@ -124,7 +124,7 @@ vector3 vector3::normalize() {
     return vector3(x * k, y * k, z * k);
 }
 
-float& vector3::operator[](int i) {
+double& vector3::operator[](int i) {
     switch(i){
         case 0:
             return x;

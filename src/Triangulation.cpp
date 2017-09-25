@@ -54,27 +54,27 @@ bool vertexIterator::operator<(const vertexIterator &fi) {
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-faceIterator::faceIterator(Mesh *_mesh, int startIndex) {
-    mesh = _mesh;
+faceIterator::faceIterator(std::vector<TriangleTopo>* tab, int startIndex) {
+    tabTri = tab;
     index = startIndex;
 }
 
 void faceIterator::nextFace() {
     index++;
-    if(index > mesh->getNbFaces())
-        index = mesh->getNbFaces();
+    if(index > tabTri->size())
+        index = tabTri->size();
 }
 
 TriangleTopo* faceIterator::operator*() {
-    if(index < mesh->getNbFaces() && index >= 0)
-        return &mesh->getTriangles(index);
+    if(index < tabTri->size() && index >= 0)
+        return &(*tabTri)[index];
     else
         return new TriangleTopo();
 }
 
 TriangleTopo* faceIterator::getFace() {
-    if(index < mesh->getNbFaces() && index >= 0) {
-        return &mesh->getTriangles(index);
+    if(index < tabTri->size() && index >= 0) {
+        return &(*tabTri)[index];
     }
     else {
         return new TriangleTopo();
@@ -83,8 +83,8 @@ TriangleTopo* faceIterator::getFace() {
 
 faceIterator faceIterator::operator++(int) {
     index = index + 1;
-    if(index > mesh->getNbFaces())
-        index = mesh->getNbFaces();
+    if(index > tabTri->size())
+        index = tabTri->size();
     return *this;
 }
 
@@ -104,11 +104,19 @@ bool faceIterator::operator<(const faceIterator &fi) {
 //////////////////////////////////////////////////////////////////////
 
 faceIterator Triangulation::faceBegin() {
-    return faceIterator(this, 0);
+    return faceIterator(&triangles, 0);
 }
 
 faceIterator Triangulation::faceEnd() {
-    return faceIterator(this, getNbFaces());
+    return faceIterator(&triangles, getNbFaces());
+}
+
+faceExtIterator Triangulation::faceExtBegin() {
+    return faceExtIterator(&triangles, &idExterieur, 0);
+}
+
+faceExtIterator Triangulation::faceExtEnd() {
+    return faceExtIterator(&triangles, &idExterieur, idExterieur.size());
 }
 
 vertexIterator Triangulation::vertexBegin() {
@@ -141,8 +149,6 @@ bool Triangulation::loadPoints(char *filename) {
     ifs >> nbVertex;
     vertex.reserve(nbVertex);
     triangles.reserve(nbVertex);
-    faces.reserve(nbVertex);
-    infinite.setId(0);
 
     for(int i = 0; i < nbVertex; i ++){
         Sommet s;
@@ -154,57 +160,70 @@ bool Triangulation::loadPoints(char *filename) {
 
     //1er Triangle
     if(estTrigo((vertex[0] - vertex[1]), (vertex[0] - vertex[2]))){
-        faces.push_back(vector3(0,1,2));
         TriangleTopo t(0,1,2,1);
         t.setNeighbor(0, 0);
         t.setNeighbor(0, 1);
         t.setNeighbor(0, 2);
         triangles.push_back(t);
+        idExterieur.push_back(t.getId());
     }
     else{
-        faces.push_back(vector3(0,2,1));
         TriangleTopo t(0,2,1,1);
         t.setNeighbor(0, 0);
         t.setNeighbor(0, 1);
         t.setNeighbor(0, 2);
         triangles.push_back(t);
+        idExterieur.push_back(t.getId());
     }
     nbFaces = 1;
     //tous les autres points
     for(int i = 3; i < nbVertex; i++){
-        int estDans = appartientMesh(*this, i);
+
+//        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+//            std::cout << (*it) << std::endl;
+//        }
+//        std::cout << std::endl << std::endl;
+        int estDans = appartientMesh(i);
+
         if(estDans != -1){
             splitTriangle(estDans, i);
+
+            if(triangles[triangles.size()-1].estExterieur() != -1)
+                idExterieur.push_back(triangles[triangles.size()-1].getId());
+
+            if(triangles[triangles.size()-2].estExterieur() != -1) {
+                idExterieur.push_back(triangles[triangles.size() - 2].getId());
+            }
         }
         else{
             std::map<couple,int> map;
-            for(int j = 0; j < triangles.size(); j++){
-                TriangleTopo& tri = triangles[j];
-                int test = tri.estExterieur();
+            for(faceExtIterator tri = faceExtBegin(); tri < faceExtEnd(); tri++){
+//            for(int j = 0; j < idExterieur.size(); j++){
+//                TriangleTopo& tri = triangles[idExterieur[j] - 1];
+//                std::cout << (*tri)->getId() << std::endl;
+                int test = (*tri)->estExterieur();
                 if(test != -1){
                     for(int k = 0; k < 3; k++) {
-                        if(tri.getNeighbor(k) == 0) {
+                        if((*tri)->getNeighbor(k) == 0) {
                             int id1, id2;
                             switch (k) {
                                 case 0:
-                                    id1 = tri.getIdSommet(1);
-                                    id2 = tri.getIdSommet(2);
+                                    id1 = (*tri)->getIdSommet(1);
+                                    id2 = (*tri)->getIdSommet(2);
                                     break;
                                 case 1:
-                                    id1 = tri.getIdSommet(2);
-                                    id2 = tri.getIdSommet(0);
+                                    id1 = (*tri)->getIdSommet(2);
+                                    id2 = (*tri)->getIdSommet(0);
                                     break;
                                 case 2:
-                                    id1 = tri.getIdSommet(0);
-                                    id2 = tri.getIdSommet(1);
+                                    id1 = (*tri)->getIdSommet(0);
+                                    id2 = (*tri)->getIdSommet(1);
                                     break;
                                 default :
                                     break;
                             }
                             if (estTrigo((vertex[i] - vertex[id2]), (vertex[i] - vertex[id1]))) {
-                                faces.push_back(vector3(i, id2, id1));
                                 TriangleTopo t(i, id2, id1, triangles.size()+1);
-
                                 int min1 = std::min(i, id1);
                                 int max1 = std::max(i, id1);
 
@@ -213,15 +232,24 @@ bool Triangulation::loadPoints(char *filename) {
 
                                 t.setNeighbor(0, 1);
                                 t.setNeighbor(0, 2);
-                                t.setNeighbor(tri.getId(), 0);
-                                tri.setNeighbor(triangles.size() + 1, k);
+                                t.setNeighbor((*tri)->getId(), 0);
+                                triangles[(*tri)->getId() - 1].setNeighbor(triangles.size() + 1, k);
 
                                 if(map[{min1, max1}] == 0) {
                                     map[{min1, max1}] = triangles.size() + 1;
                                 }
                                 else{
                                     t.setNeighbor(map[{min1, max1}], 1);
-                                    linkTriangle(triangles.size() + 1, map[{min1, max1}], {min1, max1});
+                                    int idTri = map[{min1, max1}];
+                                    linkTriangle(triangles.size() + 1, idTri, {min1, max1});
+                                    if(triangles[idTri].estExterieur() == -1){
+                                        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                                            if((*it) == idTri) {
+//                                                std::cout << "erase1" << (*it) << std::endl;
+                                                idExterieur.erase(it);
+                                            }
+                                        }
+                                    }
                                 }
 
                                 if(map[{min2, max2}] == 0) {
@@ -229,12 +257,37 @@ bool Triangulation::loadPoints(char *filename) {
                                 }
                                 else{
                                     t.setNeighbor(map[{min2, max2}], 2);
-                                    linkTriangle(triangles.size() + 1, map[{min2, max2}], {min2, max2});
+                                    int idTri = map[{min2, max2}];
+                                    linkTriangle(triangles.size() + 1, idTri, {min2, max2});
+                                    if(triangles[idTri].estExterieur() == -1){
+                                        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                                            if((*it) == idTri) {
+//                                                std::cout << "erase2" << (*it) << std::endl;
+                                                idExterieur.erase(it);
+                                            }
+                                        }
+                                    }
                                 }
-
                                 nbFaces++;
                                 triangles.push_back(t);
+                                idExterieur.push_back(t.getId());
+                                if((*tri)->estExterieur() == -1){
+                                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                                        if((*it) == (*tri)->getId()) {
+                                            idExterieur.erase(it);
+//                                            std::cout << "erase3" << (*it) << std::endl;
+                                        }
+                                    }
+                                }
                             }
+                        }
+                    }
+                }
+                else{
+                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                        if((*it) == (*tri)->getId()) {
+                            idExterieur.erase(it);
+//                            std::cout << "erase4" << (*it) << std::endl;
                         }
                     }
                 }
@@ -242,6 +295,18 @@ bool Triangulation::loadPoints(char *filename) {
         }
     }
 
+//    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+//        std::cout << (*it) << std::endl;
+//    }
+}
+
+int Triangulation::appartientMesh(int idPoint) {
+
+    for(faceIterator it = faceBegin(); it < faceEnd(); it++){
+        if(appartient((*it)->getId(), idPoint))
+            return (*it)->getId();
+    }
+    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -396,4 +461,50 @@ faceCirculator faceCirculator::operator++(int) {
 
 bool faceCirculator::operator!=(const faceCirculator &fc) {
     return curIndex != fc.curIndex;
+}
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
+faceExtIterator::faceExtIterator(std::vector<TriangleTopo> *tri, std::vector<int>* tab, int startIndex) {
+    index = startIndex;
+    tabIndex = tab;
+    tabTriangle = tri;
+}
+
+void faceExtIterator::nextFace() {
+    index++;
+    if(index > tabIndex->size())
+        index = tabIndex->size();
+}
+
+TriangleTopo *faceExtIterator::getFace() {
+    if(index < tabIndex->size() && index >= 0)
+        return &(*tabTriangle)[(*tabIndex)[index]-1];
+    else
+        return new TriangleTopo();
+}
+
+TriangleTopo *faceExtIterator::operator*() {
+    if(index < tabIndex->size() && index >= 0)
+        return &(*tabTriangle)[(*tabIndex)[index]-1];
+    else
+        return new TriangleTopo();
+}
+
+faceIterator faceExtIterator::operator++(int) {
+    index++;
+    if(index > tabIndex->size())
+        index = tabIndex->size();
+}
+
+faceIterator faceExtIterator::operator--(int) {
+    index--;
+    if(index < 0)
+        index = 0;
+}
+
+bool faceExtIterator::operator<(const faceExtIterator &fi) {
+    return index < fi.index;
 }

@@ -65,7 +65,7 @@ private:
 
 class faceIterator{
 public:
-    faceIterator(Mesh* _mesh, int startIndex);
+    faceIterator(std::vector<TriangleTopo>* tab, int startIndex);
 
     void nextFace();
 
@@ -77,7 +77,26 @@ public:
     bool operator<(const faceIterator& fi);
 
 private:
-    Mesh* mesh;
+    std::vector<TriangleTopo>* tabTri;
+    int index = 0;
+};
+
+class faceExtIterator{
+public:
+    faceExtIterator(std::vector<TriangleTopo>* tri, std::vector<int>* tab, int startIndex);
+
+    void nextFace();
+
+    TriangleTopo* getFace();
+    TriangleTopo* operator*();
+
+    faceIterator operator++(int);
+    faceIterator operator--(int);
+    bool operator<(const faceExtIterator& fi);
+
+private:
+    std::vector<TriangleTopo>* tabTriangle;
+    std::vector<int>* tabIndex;
     int index = 0;
 };
 
@@ -86,6 +105,8 @@ public:
     bool loadPoints(char* filename);
     faceIterator faceBegin();
     faceIterator faceEnd();
+    faceExtIterator faceExtBegin();
+    faceExtIterator faceExtEnd();
     vertexIterator vertexBegin();
     vertexIterator vertexEnd();
     faceCirculator faceAround(int p);
@@ -93,10 +114,8 @@ public:
 
 
 private:
-    void genMesh();
-
+    int appartientMesh(int idPoint);
+    std::vector<int> idExterieur;
 };
-
-
 
 #endif //GEOLIB_TRIANGULATION_H
