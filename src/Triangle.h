@@ -9,7 +9,7 @@
 
 class Triangle {
 public:
-    Triangle(){};
+    Triangle() = default;
     Triangle(int s1, int s2, int s3);
     int getIdSommet(int) const;
     void setIdSommet(int, int);

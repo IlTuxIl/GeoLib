@@ -62,7 +62,7 @@ faceIterator::faceIterator(std::vector<TriangleTopo>* tab, int startIndex) {
 void faceIterator::nextFace() {
     index++;
     if(index > tabTri->size())
-        index = tabTri->size();
+        index = static_cast<int>(tabTri->size());
 }
 
 TriangleTopo* faceIterator::operator*() {
@@ -84,11 +84,11 @@ TriangleTopo* faceIterator::getFace() {
 faceIterator faceIterator::operator++(int) {
     index = index + 1;
     if(index > tabTri->size())
-        index = tabTri->size();
+        index = static_cast<int>(tabTri->size());
     return *this;
 }
 
-faceIterator faceIterator::operator--(int i) {
+faceIterator faceIterator::operator--(int) {
     index = index - 1;
     if(index < 0)
         index = 0;
@@ -116,7 +116,7 @@ faceExtIterator Triangulation::faceExtBegin() {
 }
 
 faceExtIterator Triangulation::faceExtEnd() {
-    return faceExtIterator(&triangles, &idExterieur, idExterieur.size());
+    return faceExtIterator(&triangles, &idExterieur, static_cast<int>(idExterieur.size()));
 }
 
 vertexIterator Triangulation::vertexBegin() {
@@ -147,8 +147,8 @@ bool Triangulation::loadPoints(char *filename) {
         return false;
     }
     ifs >> nbVertex;
-    vertex.reserve(nbVertex);
-    triangles.reserve(nbVertex);
+    vertex.reserve(static_cast<unsigned long>(nbVertex));
+    triangles.reserve(static_cast<unsigned long>(nbVertex));
 
     for(int i = 0; i < nbVertex; i ++){
         Sommet s;
@@ -220,10 +220,12 @@ bool Triangulation::loadPoints(char *filename) {
                                     id2 = (*tri)->getIdSommet(1);
                                     break;
                                 default :
+                                    id1 = -1;
+                                    id2 = -1;
                                     break;
                             }
                             if (estTrigo((vertex[i] - vertex[id2]), (vertex[i] - vertex[id1]))) {
-                                TriangleTopo t(i, id2, id1, triangles.size()+1);
+                                TriangleTopo t(i, id2, id1, static_cast<int>(triangles.size() + 1));
                                 int min1 = std::min(i, id1);
                                 int max1 = std::max(i, id1);
 
@@ -233,15 +235,15 @@ bool Triangulation::loadPoints(char *filename) {
                                 t.setNeighbor(0, 1);
                                 t.setNeighbor(0, 2);
                                 t.setNeighbor((*tri)->getId(), 0);
-                                triangles[(*tri)->getId() - 1].setNeighbor(triangles.size() + 1, k);
+                                triangles[(*tri)->getId() - 1].setNeighbor(static_cast<int>(triangles.size() + 1), k);
 
                                 if(map[{min1, max1}] == 0) {
-                                    map[{min1, max1}] = triangles.size() + 1;
+                                    map[{min1, max1}] = static_cast<int>(triangles.size() + 1);
                                 }
                                 else{
                                     t.setNeighbor(map[{min1, max1}], 1);
                                     int idTri = map[{min1, max1}];
-                                    linkTriangle(triangles.size() + 1, idTri, {min1, max1});
+                                    linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min1, max1});
                                     if(triangles[idTri].estExterieur() == -1){
                                         for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
                                             if((*it) == idTri) {
@@ -253,12 +255,12 @@ bool Triangulation::loadPoints(char *filename) {
                                 }
 
                                 if(map[{min2, max2}] == 0) {
-                                    map[{min2, max2}] = triangles.size() + 1;
+                                    map[{min2, max2}] = static_cast<int>(triangles.size() + 1);
                                 }
                                 else{
                                     t.setNeighbor(map[{min2, max2}], 2);
                                     int idTri = map[{min2, max2}];
-                                    linkTriangle(triangles.size() + 1, idTri, {min2, max2});
+                                    linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min2, max2});
                                     if(triangles[idTri].estExterieur() == -1){
                                         for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
                                             if((*it) == idTri) {
@@ -476,7 +478,7 @@ faceExtIterator::faceExtIterator(std::vector<TriangleTopo> *tri, std::vector<int
 void faceExtIterator::nextFace() {
     index++;
     if(index > tabIndex->size())
-        index = tabIndex->size();
+        index = static_cast<int>(tabIndex->size());
 }
 
 TriangleTopo *faceExtIterator::getFace() {
@@ -496,7 +498,7 @@ TriangleTopo *faceExtIterator::operator*() {
 faceIterator faceExtIterator::operator++(int) {
     index++;
     if(index > tabIndex->size())
-        index = tabIndex->size();
+        index = static_cast<int>(tabIndex->size());
 }
 
 faceIterator faceExtIterator::operator--(int) {

@@ -20,13 +20,13 @@ public:
     vector2 operator-(const vector2&);
     vector2 operator*(float);
     vector2 operator/(float);
-    vector2 operator=(const vector2&);
+    vector2& operator=(const vector2&);
     bool operator==(const vector2&);
     friend std::ostream& operator<< (std::ostream&, const vector2&);
 
     float dot(const vector2&);
-    float length();
-    float length2();
+    double length();
+    double length2();
     vector2 normalize();
 };
 
@@ -44,15 +44,15 @@ public:
     vector3 operator-(const vector3&);
     vector3 operator*(float);
     vector3 operator/(float);
-    vector3 operator=(const vector3&);
+    vector3& operator=(const vector3&);
     bool operator==(const vector3&);
     double& operator[](int);
     friend std::ostream& operator<< (std::ostream&, const vector3&);
 
-    float dot(const vector3&) const;
+    double dot(const vector3&) const;
     vector3 cross(const vector3&) const;
-    float length();
-    float length2();
+    double length();
+    double length2();
     vector3 normalize();
 };
 

@@ -2,7 +2,7 @@
 //// Created by Julien on 04/09/2017.
 ////
 
-#include <cassert>
+//#include <cassert>
 #include <iostream>
 #include "../src/Triangulation.h"
 //#include "../src/Triangulation.h"

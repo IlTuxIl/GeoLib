@@ -3,7 +3,6 @@
 //
 
 #include "Mesh.h"
-#include "Triangulation.h"
 #include <iostream>
 #include <GL/gl.h>
 #include <map>
@@ -154,7 +153,7 @@ int Mesh::getNbVertex() const {
 }
 
 int Mesh::getNbFaces() const {
-    return triangles.size();
+    return static_cast<int>(triangles.size());
 }
 
 TriangleTopo& Mesh::getTriangles(int index) {
@@ -188,9 +187,6 @@ void Mesh::draw() {
 
     glEnd();
 
-}
-
-Mesh::~Mesh() {
 }
 
 bool Mesh::appartient(int idTri, int idPoint) {

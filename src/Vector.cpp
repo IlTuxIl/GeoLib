@@ -31,8 +31,10 @@ vector2 vector2::operator/(float k) {
     return vector2(x / k, y / k);
 }
 
-vector2 vector2::operator=(const vector2& vec) {
-    return vector2(vec.x, vec.y);
+vector2& vector2::operator=(const vector2& vec) {
+    x = vec.x;
+    y = vec.y;
+    return *this;
 }
 
 bool vector2::operator==(const vector2& vec) {
@@ -43,11 +45,11 @@ float vector2::dot(const vector2& vec) {
     return x*vec.x + y*vec.y;
 }
 
-float vector2::length() {
+double vector2::length() {
     return sqrt(length2());
 }
 
-float vector2::length2() {
+double vector2::length2() {
     return x*x + y*y;
 }
 
@@ -95,15 +97,18 @@ vector3 vector3::operator/(float k) {
     return vector3(x / k, y / k, z / k);
 }
 
-vector3 vector3::operator=(const vector3& vec) {
-    return vector3(vec.x, vec.y, vec.z);
+vector3& vector3::operator=(const vector3& vec) {
+    x = vec.x;
+    y = vec.y;
+    z = vec.z;
+    return *this;
 }
 
 bool vector3::operator==(const vector3& vec) {
     return x == vec.x && y == vec.y && z == vec.z;
 }
 
-float vector3::dot(const vector3& vec) const {
+double vector3::dot(const vector3& vec) const {
     return x*vec.x + y*vec.y + z*vec.z;
 }
 
@@ -111,11 +116,11 @@ vector3 vector3::cross(const vector3& vec) const {
     return vector3(y * vec.z - z * vec.y, z * vec.x - x * vec.z, x * vec.y - y * vec.x);
 }
 
-float vector3::length() {
+double vector3::length() {
     return sqrt(length2());
 }
 
-float vector3::length2() {
+double vector3::length2() {
     return  x*x + y*y + z*z;
 }
 

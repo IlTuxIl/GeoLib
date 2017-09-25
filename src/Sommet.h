@@ -9,13 +9,13 @@
 
 class Sommet : public vector3 {
 public:
-    Sommet(){};
+    Sommet() = default;
     Sommet(const Sommet& _sommet);
     Sommet(const vector3& vec);
     void setIdTriangle(int _id){idTriangle = _id;}
     int getIdTriangle(){return idTriangle;}
-    Sommet operator=(const vector3& vec);
-    Sommet operator=(const Sommet& vec);
+    Sommet& operator=(const vector3& vec);
+    Sommet& operator=(const Sommet& vec);
     friend std::ostream& operator<< (std::ostream&, const Sommet&);
 
 private:

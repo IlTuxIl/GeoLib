@@ -39,7 +39,7 @@ public:
 
     double appartientCercle(int idTri, int s) const;
 
-    ~Mesh();
+    ~Mesh() = default;
 protected:
     void splitTriangle(int idTri, int idSommet);
     void linkTriangle(int idNewTriangle, int idOldTriangle, const couple& c);

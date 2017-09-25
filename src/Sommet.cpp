@@ -8,13 +8,18 @@ Sommet::Sommet(const vector3 &vec) : vector3(vec) {
 
 }
 
-Sommet Sommet::operator=(const vector3 &vec) {
-    return Sommet(vec);
+Sommet& Sommet::operator=(const vector3 &vec) {
+    x = vec.x;
+    y = vec.y;
+    z = vec.z;
+    return *this;
 }
 
-Sommet Sommet::operator=(const Sommet &vec) {
-    Sommet ret(vec);
-    return ret;
+Sommet& Sommet::operator=(const Sommet &vec) {
+    x = vec.x;
+    y = vec.y;
+    z = vec.z;
+    return *this;
 }
 
 Sommet::Sommet(const Sommet &_sommet) {
