@@ -16,10 +16,18 @@ void TriangleTopo::setNeighbor(int tri, int id) {
     t[id%3] = tri;
 }
 
-int TriangleTopo::getNeighbor(int id) {
+int TriangleTopo::getNeighbor(int id) const {
     if(id == -1)
         return t[2];
     return t[id%3];
+}
+
+int TriangleTopo::estExterieur() {
+    for(int i = 0; i < 3; i++){
+        if(t[i] == 0)
+            return i;
+    }
+    return -1;
 }
 
 int TriangleTopo::getIndexInTriangle(int idSommet) {

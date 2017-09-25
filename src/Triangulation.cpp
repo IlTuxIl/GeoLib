@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <map>
 #include "Triangulation.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -141,6 +142,7 @@ bool Triangulation::loadPoints(char *filename) {
     vertex.reserve(nbVertex);
     triangles.reserve(nbVertex);
     faces.reserve(nbVertex);
+    infinite.setId(0);
 
     for(int i = 0; i < nbVertex; i ++){
         Sommet s;
@@ -154,22 +156,89 @@ bool Triangulation::loadPoints(char *filename) {
     if(estTrigo((vertex[0] - vertex[1]), (vertex[0] - vertex[2]))){
         faces.push_back(vector3(0,1,2));
         TriangleTopo t(0,1,2,1);
+        t.setNeighbor(0, 0);
+        t.setNeighbor(0, 1);
+        t.setNeighbor(0, 2);
         triangles.push_back(t);
     }
     else{
         faces.push_back(vector3(0,2,1));
-        TriangleTopo t(0,2,1,2);
+        TriangleTopo t(0,2,1,1);
+        t.setNeighbor(0, 0);
+        t.setNeighbor(0, 1);
+        t.setNeighbor(0, 2);
         triangles.push_back(t);
     }
+    nbFaces = 1;
     //tous les autres points
     for(int i = 3; i < nbVertex; i++){
-        if(appartient(1, i)){
-            splitTriangle(1, i);
-            std::cout << "check " << faces[0] << faces[1] << faces[2] << std::endl;
-            std::cout << "check " << triangles[0] << triangles[1] << triangles[2] << std::endl;
+        int estDans = appartientMesh(*this, i);
+        if(estDans != -1){
+            splitTriangle(estDans, i);
         }
         else{
-            std::cout << "non" << std::endl;
+            std::map<couple,int> map;
+            for(int j = 0; j < triangles.size(); j++){
+                TriangleTopo& tri = triangles[j];
+                int test = tri.estExterieur();
+                if(test != -1){
+                    for(int k = 0; k < 3; k++) {
+                        if(tri.getNeighbor(k) == 0) {
+                            int id1, id2;
+                            switch (k) {
+                                case 0:
+                                    id1 = tri.getIdSommet(1);
+                                    id2 = tri.getIdSommet(2);
+                                    break;
+                                case 1:
+                                    id1 = tri.getIdSommet(2);
+                                    id2 = tri.getIdSommet(0);
+                                    break;
+                                case 2:
+                                    id1 = tri.getIdSommet(0);
+                                    id2 = tri.getIdSommet(1);
+                                    break;
+                                default :
+                                    break;
+                            }
+                            if (estTrigo((vertex[i] - vertex[id2]), (vertex[i] - vertex[id1]))) {
+                                faces.push_back(vector3(i, id2, id1));
+                                TriangleTopo t(i, id2, id1, triangles.size()+1);
+
+                                int min1 = std::min(i, id1);
+                                int max1 = std::max(i, id1);
+
+                                int min2 = std::min(i, id2);
+                                int max2 = std::max(i, id2);
+
+                                t.setNeighbor(0, 1);
+                                t.setNeighbor(0, 2);
+                                t.setNeighbor(tri.getId(), 0);
+                                tri.setNeighbor(triangles.size() + 1, k);
+
+                                if(map[{min1, max1}] == 0) {
+                                    map[{min1, max1}] = triangles.size() + 1;
+                                }
+                                else{
+                                    t.setNeighbor(map[{min1, max1}], 1);
+                                    linkTriangle(triangles.size() + 1, map[{min1, max1}], {min1, max1});
+                                }
+
+                                if(map[{min2, max2}] == 0) {
+                                    map[{min2, max2}] = triangles.size() + 1;
+                                }
+                                else{
+                                    t.setNeighbor(map[{min2, max2}], 2);
+                                    linkTriangle(triangles.size() + 1, map[{min2, max2}], {min2, max2});
+                                }
+
+                                nbFaces++;
+                                triangles.push_back(t);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

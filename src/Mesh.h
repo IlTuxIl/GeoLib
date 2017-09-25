@@ -37,6 +37,9 @@ public:
 
     bool appartient(int idTri, int idPoint);
 
+    int appartientMesh(Mesh& m, int idPoint);
+
+    void flipTriangle(int tri1, int tri2);
 
     ~Mesh();
 protected:

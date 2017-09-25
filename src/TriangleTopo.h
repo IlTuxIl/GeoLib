@@ -15,9 +15,10 @@ public:
 
     int getIndexInTriangle(int idSommet);
     void setId(int _id){id = _id;};
-    int getId(){return this->id;}
+    int getId()const{return this->id;}
     void setNeighbor(int idtri, int id);
-    int getNeighbor(int id);
+    int getNeighbor(int id) const;
+    int estExterieur();
     friend std::ostream& operator<< (std::ostream&, const TriangleTopo&);
 
 private:

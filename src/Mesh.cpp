@@ -42,10 +42,11 @@ bool Mesh::loadOFF(char* filename) {
     ifs >> str;
     int trash;
     ifs >> nbVertex >> nbFaces >> trash;
-////////////////////// INIT (malloc) ///////////////////
+////////////////////// INIT ///////////////////
     triangles.reserve((unsigned long) nbFaces);
     vertex.reserve((unsigned long) nbFaces);
     faces.reserve((unsigned long) nbFaces);
+    infinite.setId(0);
 ////////////////////////////////////////////////////////
 ////////////////////// Lecture vertex et faces /////////
 
@@ -174,6 +175,8 @@ void Mesh::draw() {
 
     glBegin(GL_TRIANGLES);
 
+    //std::cout << getNbFaces() << getNbVertex() << triangles.size() << std::endl;
+
     for (int i = 0; i < getNbFaces(); i++) {
         int i1, i2, i3;
         i1 = getFaces(i).x;
@@ -184,9 +187,12 @@ void Mesh::draw() {
         vector3 v2 = getVertex(i2);
         vector3 v3 = getVertex(i3);
 
+        glColor3f((float) (rand() * 100)/100, (float) (rand() * 100)/100, (float) (rand() * 100)/100);
+
         glVertex3f(v1.x, v1.y, v1.z);
         glVertex3f(v2.x, v2.y, v2.z);
         glVertex3f(v3.x, v3.y, v3.z);
+
     }
 
     glEnd();
@@ -235,9 +241,47 @@ bool Mesh::appartient(int idTri, int idPoint) {
     return a&&b&&c;
 }
 
+int Mesh::appartientMesh(Mesh &m, int idPoint) {
+    for(int i = 1; i < nbFaces + 1; i++){
+        if(appartient(i, idPoint))
+            return i;
+    }
+    return -1;
+}
+
 //Uniquement si idSommet appartient à idTri
 void Mesh::splitTriangle(int idTri, int idSommet) {
     TriangleTopo& triangleASplit = triangles[idTri-1];
+    TriangleTopo triangleB = TriangleTopo(idSommet, triangleASplit.getIdSommet(1), triangleASplit.getIdSommet(2), triangles.size()+1);
+    TriangleTopo triangleC = TriangleTopo(idSommet, triangleASplit.getIdSommet(2), triangleASplit.getIdSommet(0), triangles.size()+2);
+
+    triangleB.setNeighbor(idTri, 2);
+    triangleB.setNeighbor(triangles.size()+2, 1);
+    triangleB.setNeighbor(triangleASplit.getNeighbor(0), 0);
+    if(triangleASplit.getNeighbor(0) != 0) {
+        TriangleTopo &voisinB = triangles[triangleASplit.getNeighbor(0) - 1];
+
+        for (int i = 0; i < 3; i++) {
+            if (voisinB.getNeighbor(i) == idTri) {
+                voisinB.setNeighbor(triangles.size() + 1, i);
+            }
+        }
+    }
+    triangleC.setNeighbor(idTri, 1);
+    triangleC.setNeighbor(triangles.size()+1, 2);
+    triangleC.setNeighbor(triangleASplit.getNeighbor(1), 0);
+
+    if(triangleASplit.getNeighbor(1) != 0) {
+        TriangleTopo &voisinC = triangles[triangleASplit.getNeighbor(1) - 1];
+        for (int i = 0; i < 3; i++) {
+            if (voisinC.getNeighbor(i) == idTri) {
+                voisinC.setNeighbor(triangles.size() + 2, i);
+            }
+        }
+    }
+
+    triangleASplit.setNeighbor(triangles.size()+1 ,0);
+    triangleASplit.setNeighbor(triangles.size()+2 ,1);
 
     vector3 p1, p2;
     p1.x = idSommet;
@@ -252,7 +296,87 @@ void Mesh::splitTriangle(int idTri, int idSommet) {
 
     faces[idTri-1][2] = idSommet;
 
-    triangles.push_back(TriangleTopo(idSommet, triangleASplit.getIdSommet(1), triangleASplit.getIdSommet(2), triangles.size()));
-    triangles.push_back(TriangleTopo(idSommet, triangleASplit.getIdSommet(2), triangleASplit.getIdSommet(0), triangles.size()));
+    triangles.push_back(triangleB);
+    triangles.push_back(triangleC);
     triangleASplit.setIdSommet(idSommet, 2);
+    nbFaces+=2;
+}
+
+couple getArreteAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
+    int i;
+    for(i = 0; i < 3; i++){
+        if(t1.getNeighbor(i) == t2.getId())
+            break;
+    }
+    switch (i){
+        case 0:
+            return couple{1, 2};
+        case 1:
+            return couple{2, 0};
+        case 2:
+            return couple{0, 1};
+        default:
+            return couple{-1,-1};
+    }
+}
+
+couple getPointsAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
+    int i;
+    for(i = 0; i < 3; i++){
+        if(t1.getNeighbor(i) == t2.getId())
+            break;
+    }
+    switch (i){
+        case 0:
+            return couple{t1.getIdSommet(1), t1.getIdSommet(2)};
+        case 1:
+            return couple{t1.getIdSommet(2), t1.getIdSommet(0)};
+        case 2:
+            return couple{t1.getIdSommet(0), t1.getIdSommet(1)};
+        default:
+            return couple{-1,-1};
+    }
+}
+
+//Tri1 et Tri2 adjacent
+void Mesh::flipTriangle(int idTri1, int idTri2) {
+    TriangleTopo& tri1 = triangles[idTri1-1];
+    TriangleTopo& tri2 = triangles[idTri2-1];
+
+    couple arrete1 = getArreteAdjacent(tri1, tri2);
+    couple arrete2 = getArreteAdjacent(tri2, tri1);
+
+    int indexT1 = 3 - arrete1.p1 - arrete1.p2;
+    int indexT2 = 3 - arrete2.p1 - arrete2.p2;
+
+    int idVoisin1 = tri1.getNeighbor(arrete1.p2);
+    int idVoisin2 = tri2.getNeighbor(arrete2.p2);
+
+    tri1.setIdSommet(tri2.getIdSommet(indexT2), arrete1.p1);
+    tri2.setIdSommet(tri1.getIdSommet(indexT1), arrete2.p1);
+
+    tri1.setNeighbor(tri2.getId(), arrete1.p2);
+    tri1.setNeighbor(idVoisin2, indexT1);
+
+    tri2.setNeighbor(tri1.getId(), arrete2.p2);
+    tri2.setNeighbor(idVoisin1, indexT2);
+
+    if(idVoisin1 > 0){
+        TriangleTopo& voisin = triangles[idVoisin1 - 1];
+        for(int i = 0; i < 3; i++) {
+            if (voisin.getNeighbor(i) == tri1.getId()){
+                voisin.setNeighbor(tri2.getId(), i);
+                break;
+            }
+        }
+    }
+    if(idVoisin2 > 0){
+        TriangleTopo& voisin = triangles[idVoisin2 - 1];
+        for(int i = 0; i < 3; i++) {
+            if (voisin.getNeighbor(i) == tri2.getId()){
+                voisin.setNeighbor(tri1.getId(), i);
+                break;
+            }
+        }
+    }
 }
