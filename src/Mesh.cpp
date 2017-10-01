@@ -208,6 +208,10 @@ void Mesh::splitTriangle(int idTri, int idSommet) {
     TriangleTopo triangleB = TriangleTopo(idSommet, triangleASplit.getIdSommet(1), triangleASplit.getIdSommet(2), triangles.size()+1);
     TriangleTopo triangleC = TriangleTopo(idSommet, triangleASplit.getIdSommet(2), triangleASplit.getIdSommet(0), triangles.size()+2);
 
+    vertex[idSommet].setIdTriangle(triangles.size() - 2);
+    vertex[triangleASplit.getIdSommet(1)].setIdTriangle(triangles.size() - 2);
+    vertex[triangleASplit.getIdSommet(2)].setIdTriangle(triangles.size() - 1);
+
     triangleB.setNeighbor(idTri, 2);
     triangleB.setNeighbor(triangles.size()+2, 1);
     triangleB.setNeighbor(triangleASplit.getNeighbor(0), 0);
@@ -236,19 +240,6 @@ void Mesh::splitTriangle(int idTri, int idSommet) {
     triangleASplit.setNeighbor(triangles.size()+1 ,0);
     triangleASplit.setNeighbor(triangles.size()+2 ,1);
 
-//    vector3 p1, p2;
-//    p1.x = idSommet;
-//    p1.y = triangleASplit.getIdSommet(1);
-//    p1.z = triangleASplit.getIdSommet(2);
-//    faces.push_back(p1);
-//
-//    p2.x = idSommet;
-//    p2.y= triangleASplit.getIdSommet(2);
-//    p2.z = triangleASplit.getIdSommet(0);
-//    faces.push_back(p2);
-//
-//    faces[idTri-1][2] = idSommet;
-
     triangles.push_back(triangleB);
     triangles.push_back(triangleC);
     triangleASplit.setIdSommet(idSommet, 2);
@@ -273,7 +264,7 @@ couple getArreteAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
     }
 }
 
-couple getPointsAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
+couple Mesh::getPointsAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
     int i;
     for(i = 0; i < 3; i++){
         if(t1.getNeighbor(i) == t2.getId())
@@ -340,6 +331,7 @@ bool Mesh::flipTriangle(int idTri1, int idTri2) {
 
 double Mesh::appartientCercle(int idTri, int idPoint) const {
     TriangleTopo tri = triangles[idTri-1];
+
     Sommet s = vertex[idPoint];
     Sommet p1 = vertex[tri.getIdSommet(0)];
     Sommet p2 = vertex[tri.getIdSommet(1)];

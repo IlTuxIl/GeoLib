@@ -43,7 +43,7 @@ public:
 protected:
     void splitTriangle(int idTri, int idSommet);
     void linkTriangle(int idNewTriangle, int idOldTriangle, const couple& c);
-
+    couple getPointsAdjacent(const TriangleTopo& t1, const TriangleTopo& t2);
     std::vector<Sommet> vertex;
 
     int nbVertex;

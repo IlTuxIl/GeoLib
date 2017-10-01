@@ -105,10 +105,12 @@
 void triangu(){
     Triangulation t;
     t.loadPoints("test.points");
+    t.makeDelaunay();
 //    t.flipTriangle(1,2);
 //    t.appartientCercle(1, 3);
 //    std::cout << t.getTriangles(0) << std::endl;
 
+    std::cout << std::endl << std::endl;
     for(int i = 0; i < t.getNbFaces(); i++){
         std::cout << t.getTriangles(i);
         std::cout << t.getTriangles(i).getNeighbor(0) << t.getTriangles(i).getNeighbor(1) << t.getTriangles(i).getNeighbor(2) <<std::endl;

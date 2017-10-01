@@ -111,7 +111,7 @@ public:
     vertexIterator vertexEnd();
     faceCirculator faceAround(int p);
     vertexCirculator vertexAround(int p);
-
+    void makeDelaunay();
 
 private:
     int appartientMesh(int idPoint);
