@@ -2,7 +2,7 @@
 // Created by Julien on 04/09/2017.
 //
 
-#include "Mesh.h"
+#include "../include/Mesh.h"
 #include <iostream>
 #include <GL/gl.h>
 #include <map>
@@ -177,7 +177,7 @@ void Mesh::draw() {
         vector3 v2 = getVertex(i2);
         vector3 v3 = getVertex(i3);
 
-        glColor3f((float) (rand() * 100)/100, (float) (rand() * 100)/100, (float) (rand() * 100)/100);
+        glColor3f((float) (rand() * 255), (float) (rand() * 255), (float) (rand() * 255));
 
         glVertex3f(v1.x, v1.y, v1.z);
         glVertex3f(v2.x, v2.y, v2.z);
@@ -246,7 +246,7 @@ void Mesh::splitTriangle(int idTri, int idSommet) {
     nbFaces+=2;
 }
 
-couple getArreteAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
+couple Mesh::getArreteAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
     int i;
     for(i = 0; i < 3; i++){
         if(t1.getNeighbor(i) == t2.getId())
@@ -282,55 +282,13 @@ couple Mesh::getPointsAdjacent(const TriangleTopo& t1, const TriangleTopo& t2){
     }
 }
 
-//Tri1 et Tri2 adjacent
-bool Mesh::flipTriangle(int idTri1, int idTri2) {
-    TriangleTopo& tri1 = triangles[idTri1-1];
-    TriangleTopo& tri2 = triangles[idTri2-1];
-
-    couple arrete1 = getArreteAdjacent(tri1, tri2);
-    couple arrete2 = getArreteAdjacent(tri2, tri1);
-
-    if(arrete1.p1 == -1 || arrete2.p1 == -1)
-        return false;
-
-    int indexT1 = 3 - arrete1.p1 - arrete1.p2;
-    int indexT2 = 3 - arrete2.p1 - arrete2.p2;
-
-    int idVoisin1 = tri1.getNeighbor(arrete1.p2);
-    int idVoisin2 = tri2.getNeighbor(arrete2.p2);
-
-    tri1.setIdSommet(tri2.getIdSommet(indexT2), arrete1.p1);
-    tri2.setIdSommet(tri1.getIdSommet(indexT1), arrete2.p1);
-
-    tri1.setNeighbor(tri2.getId(), arrete1.p2);
-    tri1.setNeighbor(idVoisin2, indexT1);
-
-    tri2.setNeighbor(tri1.getId(), arrete2.p2);
-    tri2.setNeighbor(idVoisin1, indexT2);
-
-    if(idVoisin1 > 0){
-        TriangleTopo& voisin = triangles[idVoisin1 - 1];
-        for(int i = 0; i < 3; i++) {
-            if (voisin.getNeighbor(i) == tri1.getId()){
-                voisin.setNeighbor(tri2.getId(), i);
-                break;
-            }
-        }
-    }
-    if(idVoisin2 > 0){
-        TriangleTopo& voisin = triangles[idVoisin2 - 1];
-        for(int i = 0; i < 3; i++) {
-            if (voisin.getNeighbor(i) == tri2.getId()){
-                voisin.setNeighbor(tri1.getId(), i);
-                break;
-            }
-        }
-    }
-    return true;
-}
-
 double Mesh::appartientCercle(int idTri, int idPoint) const {
     TriangleTopo tri = triangles[idTri-1];
+
+    for(int i = 0; i < 3; i++){
+        if(tri.getIdSommet(i) == idPoint)
+            return 0;
+    }
 
     Sommet s = vertex[idPoint];
     Sommet p1 = vertex[tri.getIdSommet(0)];
@@ -342,5 +300,5 @@ double Mesh::appartientCercle(int idTri, int idPoint) const {
     p3.z = pow(p3.x ,2) + pow(p3.y, 2);
     s.z = pow(s.x ,2) + pow(s.y, 2);
 
-    return vector3((p2-p1).cross(p3 - p1)).dot(s-p1);
+    return (double) vector3((p2-p1).cross(p3 - p1)).dot(s-p1);
 }

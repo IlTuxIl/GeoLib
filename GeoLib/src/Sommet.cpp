@@ -2,7 +2,7 @@
 // Created by julien on 07/09/17.
 //
 
-#include "Sommet.h"
+#include "../include/Sommet.h"
 
 Sommet::Sommet(const vector3 &vec) : vector3(vec) {
 

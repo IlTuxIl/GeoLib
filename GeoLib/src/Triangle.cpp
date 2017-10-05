@@ -2,7 +2,7 @@
 // Created by julien on 05/09/17.
 //
 
-#include "Triangle.h"
+#include "../include/Triangle.h"
 
 Triangle::Triangle(int s1, int s2, int s3) {
     v[0] = s1;

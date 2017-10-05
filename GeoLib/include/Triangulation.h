@@ -21,6 +21,7 @@ public:
     bool operator!=(const faceCirculator& fc);
 private:
     Mesh* mesh;
+    bool changeTriangle;
     TriangleTopo* curTriangle;
     int curIndex;
     int startIndex;
@@ -111,9 +112,11 @@ public:
     vertexIterator vertexEnd();
     faceCirculator faceAround(int p);
     vertexCirculator vertexAround(int p);
+    bool flipTriangle(int tri1, int tri2);
     void makeDelaunay();
 
 private:
+    void addPointDelaunay(int idPoint);
     int appartientMesh(int idPoint);
     std::vector<int> idExterieur;
 };

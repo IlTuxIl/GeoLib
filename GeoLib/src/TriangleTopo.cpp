@@ -2,7 +2,7 @@
 // Created by julien on 07/09/17.
 //
 
-#include "TriangleTopo.h"
+#include "../include/TriangleTopo.h"
 
 TriangleTopo::TriangleTopo(int _s1, int _s2, int _s3, int _id) {
     v[0] = _s1;

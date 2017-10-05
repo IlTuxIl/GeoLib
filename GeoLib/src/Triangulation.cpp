@@ -4,8 +4,8 @@
 
 #include <iostream>
 #include <map>
-#include <stack>
-#include "Triangulation.h"
+#include <queue>
+#include "../include/Triangulation.h"
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
@@ -299,53 +299,307 @@ bool Triangulation::loadPoints(char *filename) {
 
 int Triangulation::appartientMesh(int idPoint) {
 
-    for(faceIterator it = faceBegin(); it < faceEnd(); it++){
-        if(appartient((*it)->getId(), idPoint))
-            return (*it)->getId();
+    Sommet but = vertex[idPoint];
+    TriangleTopo cur = triangles[rand() % triangles.size()];
+    int cpt = 0;
+    while(!appartient(cur.getId(), idPoint)) {
+        cpt++;
+        for (int i = 0; i < 3; i++) {
+            Sommet s1 = vertex[cur.getIdSommet(i + 1)];
+            Sommet s2 = vertex[cur.getIdSommet(i + 2)];
+
+            if (estTrigo((but - s2), (but - s1))) {
+                if (cur.getNeighbor(i) != 0){
+                    cur = triangles[cur.getNeighbor(i) - 1];
+                    break;
+                }
+            }
+            if(i == 2) {
+                //std::cout << cpt << " " << triangles.size() << std::endl;
+                return -1;
+            }
+        }
     }
-    return -1;
+    //std::cout << cpt << " " << triangles.size() << std::endl;
+    return cur.getId();
+//    for(faceIterator it = faceBegin(); it < faceEnd(); it++){
+//        if(appartient((*it)->getId(), idPoint))
+//            return (*it)->getId();
+//    }
 }
 
 void Triangulation::makeDelaunay() {
-    std::stack<int> pile;
+    std::queue<int> file;
     //Initialisation de la pile
     for(faceIterator fi = faceBegin(); fi < faceEnd(); fi++) {
-        pile.push((*fi)->getId());
+        file.push((*fi)->getId());
     }
 
     //algo
-    while(pile.size() > 0){
-        int top = pile.top();
+    while(file.size() > 0){
+        int top = file.front();
         for(int p = 0; p < vertex.size(); p++){
-//            std::cout << top << " " << triangles.size() << " " << p << " " << vertex.size() << std::endl;
+            bool ok = false;
             if(appartientCercle(top, p) < 0.0f){
-                int idTri = vertex[p].getIdTriangle();
+//                int idTri = vertex[p].getIdTriangle();
                 faceCirculator fc = faceAround(p);
                 bool fin = false;
                 do {
-                    if (getPointsAdjacent(triangles[top - 1], *(*fc)).p1 != -1) {
-                        flipTriangle(top, (*fc)->getId());
-                        for(int voisin = 0; voisin < 3; voisin++){
-                            if(triangles[top - 1].getNeighbor(voisin) > 0)
-                                pile.push(triangles[top - 1].getNeighbor(voisin));
-                            if((*fc)->getNeighbor(voisin) > 0)
-                                pile.push((*fc)->getNeighbor(voisin));
-                        }
+                    if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1) {
+                        ok = true;
                         fin = true;
+                        flipTriangle(top, (*fc)->getId());
+                        //PAS BON
+                        for(int voisin = 0; voisin < 3; voisin++){
+                            if(triangles[top - 1].getNeighbor(voisin) > 0 && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId())
+                                file.push(triangles[top - 1].getNeighbor(voisin));
+                            if((*fc)->getNeighbor(voisin) > 0 && (*fc)->getNeighbor(voisin) != top)
+                                file.push((*fc)->getNeighbor(voisin));
+                        }
                     }
                     if(fin)
                         break;
                     fc++;
                 }while(fc != faceAround(p) || fin);
             }
+            if(ok)
+                break;
         }
-        pile.pop();
+        file.pop();
     }
 }
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
 
+void Triangulation::addPointDelaunay(int idPoint) {
+    Sommet s = vertex[idPoint];
+    std::queue<int> file;
+    int test = appartientMesh(idPoint);
+    if(test != 1){
+        splitTriangle(test, idPoint);
+        if(triangles[triangles.size()-1].estExterieur() != -1)
+            idExterieur.push_back(triangles[triangles.size()-1].getId());
+
+        if(triangles[triangles.size()-2].estExterieur() != -1)
+            idExterieur.push_back(triangles[triangles.size() - 2].getId());
+
+        file.push(test);
+        file.push(triangles.size() - 2);
+        file.push(triangles.size() - 1);
+    }
+    else{
+        //cas exterieur
+        std::map<couple,int> map;
+        for(faceExtIterator tri = faceExtBegin(); tri < faceExtEnd(); tri++){
+            int test = (*tri)->estExterieur();
+
+            if(test != -1){
+                for(int k = 0; k < 3; k++) {
+                    if((*tri)->getNeighbor(k) == 0) {
+                        int id1, id2;
+                        switch (k) {
+                            case 0:
+                                id1 = (*tri)->getIdSommet(1);
+                                id2 = (*tri)->getIdSommet(2);
+                                break;
+                            case 1:
+                                id1 = (*tri)->getIdSommet(2);
+                                id2 = (*tri)->getIdSommet(0);
+                                break;
+                            case 2:
+                                id1 = (*tri)->getIdSommet(0);
+                                id2 = (*tri)->getIdSommet(1);
+                                break;
+                            default :
+                                id1 = -1;
+                                id2 = -1;
+                                break;
+                        }
+                        if (estTrigo((vertex[idPoint] - vertex[id2]), (vertex[idPoint] - vertex[id1]))) {
+                            TriangleTopo t(idPoint, id2, id1, static_cast<int>(triangles.size() + 1));
+                            int min1 = std::min(idPoint, id1);
+                            int max1 = std::max(idPoint, id1);
+
+                            int min2 = std::min(idPoint, id2);
+                            int max2 = std::max(idPoint, id2);
+
+                            vertex[id2].setIdTriangle(triangles.size() + 1);
+                            vertex[id1].setIdTriangle(triangles.size() + 1);
+                            vertex[idPoint].setIdTriangle(triangles.size() + 1);
+
+                            t.setNeighbor(0, 1);
+                            t.setNeighbor(0, 2);
+                            t.setNeighbor((*tri)->getId(), 0);
+                            triangles[(*tri)->getId() - 1].setNeighbor(static_cast<int>(triangles.size() + 1), k);
+
+                            if(map[{min1, max1}] == 0) {
+                                map[{min1, max1}] = static_cast<int>(triangles.size() + 1);
+                            }
+                            else{
+                                t.setNeighbor(map[{min1, max1}], 1);
+                                int idTri = map[{min1, max1}];
+                                linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min1, max1});
+                                if(triangles[idTri-1].estExterieur() == -1){
+                                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                                        if((*it) == idTri) {
+                                            idExterieur.erase(it);
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(map[{min2, max2}] == 0) {
+                                map[{min2, max2}] = static_cast<int>(triangles.size() + 1);
+                            }
+                            else{
+                                t.setNeighbor(map[{min2, max2}], 2);
+                                int idTri = map[{min2, max2}];
+                                linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min2, max2});
+                                if(triangles[idTri-1].estExterieur() == -1){
+                                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                                        if((*it) == idTri) {
+                                            idExterieur.erase(it);
+                                        }
+                                    }
+                                }
+                            }
+                            nbFaces++;
+                            triangles.push_back(t);
+                            idExterieur.push_back(t.getId());
+                            if((*tri)->estExterieur() == -1){
+                                for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                                    if((*it) == (*tri)->getId()) {
+                                        idExterieur.erase(it);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else{
+                for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+                    if((*it) == (*tri)->getId()) {
+                        idExterieur.erase(it);
+                    }
+                }
+            }
+        }
+
+    }
+
+    while(file.size() > 0){
+        int top = file.front();
+        for(int p = 0; p < vertex.size(); p++){
+            bool ok = false;
+            if(appartientCercle(top, p) < 0.0f){
+//                int idTri = vertex[p].getIdTriangle();
+                faceCirculator fc = faceAround(p);
+                bool fin = false;
+                do {
+                    if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1) {
+                        ok = true;
+                        fin = true;
+                        flipTriangle(top, (*fc)->getId());
+                        //PAS BON
+                        for(int voisin = 0; voisin < 3; voisin++){
+                            if(triangles[top - 1].getNeighbor(voisin) > 0 && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId())
+                                file.push(triangles[top - 1].getNeighbor(voisin));
+                            if((*fc)->getNeighbor(voisin) > 0 && (*fc)->getNeighbor(voisin) != top)
+                                file.push((*fc)->getNeighbor(voisin));
+                        }
+                    }
+                    if(fin)
+                        break;
+                    fc++;
+                }while(fc != faceAround(p) || fin);
+            }
+            if(ok)
+                break;
+        }
+        file.pop();
+    }
+}
+
+//Tri1 et Tri2 adjacent
+bool Triangulation::flipTriangle(int idTri1, int idTri2) {
+    TriangleTopo& tri1 = triangles[idTri1-1];
+    TriangleTopo& tri2 = triangles[idTri2-1];
+
+    couple arrete1 = getArreteAdjacent(tri1, tri2);
+    couple arrete2 = getArreteAdjacent(tri2, tri1);
+
+    if(arrete1.p1 == -1 || arrete2.p1 == -1)
+        return false;
+
+    int indexT1 = 3 - arrete1.p1 - arrete1.p2;
+    int indexT2 = 3 - arrete2.p1 - arrete2.p2;
+
+    int idVoisin1 = tri1.getNeighbor(arrete1.p2);
+    int idVoisin2 = tri2.getNeighbor(arrete2.p2);
+
+    tri1.setIdSommet(tri2.getIdSommet(indexT2), arrete1.p1);
+    tri2.setIdSommet(tri1.getIdSommet(indexT1), arrete2.p1);
+
+    tri1.setNeighbor(tri2.getId(), arrete1.p2);
+    tri1.setNeighbor(idVoisin2, indexT1);
+
+    tri2.setNeighbor(tri1.getId(), arrete2.p2);
+    tri2.setNeighbor(idVoisin1, indexT2);
+
+    if(idVoisin1 > 0){
+        TriangleTopo& voisin = triangles[idVoisin1 - 1];
+        for(int i = 0; i < 3; i++) {
+            if (voisin.getNeighbor(i) == tri1.getId()){
+                voisin.setNeighbor(tri2.getId(), i);
+                break;
+            }
+        }
+    }
+    if(idVoisin2 > 0){
+        TriangleTopo& voisin = triangles[idVoisin2 - 1];
+        for(int i = 0; i < 3; i++) {
+            if (voisin.getNeighbor(i) == tri2.getId()){
+                voisin.setNeighbor(tri1.getId(), i);
+                break;
+            }
+        }
+    }
+
+
+    bool t1Ext = tri1.estExterieur() != -1;
+    bool t2Ext = tri2.estExterieur() != -1;
+
+    bool okt1 = false;
+    bool okt2 = false;
+
+    int t1Id = tri1.getId();
+    int t2Id = tri2.getId();
+
+    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+        if((*it) == t1Id){
+            okt1 = true;
+            if(!t1Ext)
+                idExterieur.erase(it);
+        }
+
+        if((*it) == t2Id){
+            okt2 = true;
+            if(!t2Ext)
+                idExterieur.erase(it);
+        }
+        if(okt1 && okt2)
+            break;
+    }
+
+    if(!okt1 && t1Ext)
+        idExterieur.push_back(t1Id);
+    if(!okt2 && t2Ext)
+        idExterieur.push_back(t2Id);
+    return true;
+}
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 vertexCirculator::vertexCirculator(Mesh *_mesh, int _index) {
     mesh = _mesh;
@@ -436,6 +690,7 @@ bool vertexCirculator::operator!=(const vertexCirculator &vc) {
 
 faceCirculator::faceCirculator(Mesh *_mesh, int idSommet) {
     mesh = _mesh;
+    changeTriangle = true;
     if (idSommet >= 0 && idSommet < mesh->getNbVertex()) {
         Sommet s = mesh->getVertex(idSommet);
         curTriangle = &mesh->getTriangles(s.getIdTriangle()-1);
@@ -445,18 +700,20 @@ faceCirculator::faceCirculator(Mesh *_mesh, int idSommet) {
 }
 
 void faceCirculator::nextFace() {
-    curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) - 1) - 1);
+    if (curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) == 0){
+        TriangleTopo *tmpTri = &mesh->getTriangles(mesh->getVertex(startIndex).getIdTriangle() - 1);
 
-    if(curTriangle->getId() == 0){
-        Sommet s = mesh->getVertex(startIndex);
-        TriangleTopo* tmpTri = &mesh->getTriangles(s.getIdTriangle()-1);
-
-        while(tmpTri->getId() != 0){
+        while (tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) != 0) {
+            tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) - 1);
             curTriangle = tmpTri;
-            tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) + 1) - 1);
+//                std::cout << curTriangle->getId() << std::endl;
         }
+        changeTriangle = false;
+        curIndex = curTriangle->getId();
+    } else {
+        curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) - 1);
+        curIndex = curTriangle->getId();
     }
-    curIndex = curTriangle->getId();
 }
 
 int faceCirculator::getIndex() {
@@ -478,18 +735,30 @@ TriangleTopo* faceCirculator::operator*() {
 }
 
 faceCirculator faceCirculator::operator++(int) {
-    curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) - 1) - 1);
     //BUG SI MODIFICATION DU CUR TRIANGLE
-    if(curTriangle->getId() == 0){
-        Sommet s = mesh->getVertex(startIndex);
-        TriangleTopo* tmpTri = &mesh->getTriangles(s.getIdTriangle()-1);
+//    if (changeTriangle) {
 
-        while(tmpTri->getId() != 0){
-            curTriangle = tmpTri;
-            tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) + 1) - 1);
+        //std::cout << curTriangle->getIndexInTriangle(startIndex) + 1 << std::endl;
+
+        if (curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) == 0){
+            TriangleTopo *tmpTri = &mesh->getTriangles(mesh->getVertex(startIndex).getIdTriangle() - 1);
+
+            while (tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) != 0) {
+                tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) - 1);
+                curTriangle = tmpTri;
+//                std::cout << curTriangle->getId() << std::endl;
+            }
+            changeTriangle = false;
+            curIndex = curTriangle->getId();
+        } else {
+            curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) - 1);
+            curIndex = curTriangle->getId();
         }
-    }
-    curIndex = curTriangle->getId();
+//    }
+//    else{
+//        changeTriangle = true;
+//        curIndex = curTriangle->getId();
+//    }
 }
 
 bool faceCirculator::operator!=(const faceCirculator &fc) {

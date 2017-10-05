@@ -35,14 +35,13 @@ public:
 
     bool appartient(int idTri, int idPoint);
 
-    bool flipTriangle(int tri1, int tri2);
-
     double appartientCercle(int idTri, int s) const;
 
     ~Mesh() = default;
 protected:
     void splitTriangle(int idTri, int idSommet);
     void linkTriangle(int idNewTriangle, int idOldTriangle, const couple& c);
+    couple getArreteAdjacent(const TriangleTopo& t1, const TriangleTopo& t2);
     couple getPointsAdjacent(const TriangleTopo& t1, const TriangleTopo& t2);
     std::vector<Sommet> vertex;
 
