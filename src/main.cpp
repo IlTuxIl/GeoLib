@@ -14,7 +14,6 @@
 #include "orbiter.h"
 #include "app.h"        // classe Application a deriver
 
-
 class Framebuffer : public App
 {
 public:
