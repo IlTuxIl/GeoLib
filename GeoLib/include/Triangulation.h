@@ -114,6 +114,8 @@ public:
     vertexCirculator vertexAround(int p);
     bool flipTriangle(int tri1, int tri2);
     void makeDelaunay();
+    Sommet* getVertex();
+    int* getIndex();
 
 private:
     void addPointDelaunay(int idPoint);

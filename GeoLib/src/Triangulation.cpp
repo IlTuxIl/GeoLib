@@ -597,6 +597,24 @@ bool Triangulation::flipTriangle(int idTri1, int idTri2) {
     return true;
 }
 
+Sommet* Triangulation::getVertex(){
+    return vertex.data();
+}
+
+int* Triangulation::getIndex() {
+    int* ret = new int(3 * sizeof(int) * nbFaces);
+    int i = 0;
+    for(TriangleTopo t : triangles){
+        ret[i] = t.getIdSommet(0);
+        i++;
+        ret[i] = t.getIdSommet(1);
+        i++;
+        ret[i] = t.getIdSommet(2);
+        i++;
+    }
+    return ret;
+}
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
