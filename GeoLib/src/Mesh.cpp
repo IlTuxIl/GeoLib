@@ -161,34 +161,6 @@ TriangleTopo& Mesh::getTriangles(int index) {
         return triangles[index];
 }
 
-void Mesh::draw() {
-
-    glBegin(GL_TRIANGLES);
-
-    //std::cout << getNbFaces() << getNbVertex() << triangles.size() << std::endl;
-
-    for (int i = 0; i < getNbFaces(); i++) {
-        int i1, i2, i3;
-        i1 = triangles[i].getIdSommet(0);
-        i2 = triangles[i].getIdSommet(1);
-        i3 = triangles[i].getIdSommet(2);
-
-        vector3 v1 = getVertex(i1);
-        vector3 v2 = getVertex(i2);
-        vector3 v3 = getVertex(i3);
-
-        glColor3f((float) (rand() * 255), (float) (rand() * 255), (float) (rand() * 255));
-
-        glVertex3f(v1.x, v1.y, v1.z);
-        glVertex3f(v2.x, v2.y, v2.z);
-        glVertex3f(v3.x, v3.y, v3.z);
-
-    }
-
-    glEnd();
-
-}
-
 bool Mesh::appartient(int idTri, int idPoint) {
     TriangleTopo t = triangles[idTri-1];
     Sommet s1 = getVertex(t.getIdSommet(0));
@@ -204,16 +176,16 @@ bool Mesh::appartient(int idTri, int idPoint) {
 
 //Uniquement si idSommet appartient à idTri
 void Mesh::splitTriangle(int idTri, int idSommet) {
-    TriangleTopo& triangleASplit = triangles[idTri-1];
+    TriangleTopo triangleASplit = triangles[idTri-1];
     TriangleTopo triangleB = TriangleTopo(idSommet, triangleASplit.getIdSommet(1), triangleASplit.getIdSommet(2), triangles.size()+1);
     TriangleTopo triangleC = TriangleTopo(idSommet, triangleASplit.getIdSommet(2), triangleASplit.getIdSommet(0), triangles.size()+2);
 
-    vertex[idSommet].setIdTriangle(triangles.size() - 2);
-    vertex[triangleASplit.getIdSommet(1)].setIdTriangle(triangles.size() - 2);
-    vertex[triangleASplit.getIdSommet(2)].setIdTriangle(triangles.size() - 1);
+    vertex[idSommet].setIdTriangle(triangleC.getId());
+    vertex[triangleASplit.getIdSommet(1)].setIdTriangle(triangleB.getId());
+    vertex[triangleASplit.getIdSommet(2)].setIdTriangle(triangleC.getId());
 
     triangleB.setNeighbor(idTri, 2);
-    triangleB.setNeighbor(triangles.size()+2, 1);
+    triangleB.setNeighbor(triangleC.getId(), 1);
     triangleB.setNeighbor(triangleASplit.getNeighbor(0), 0);
     if(triangleASplit.getNeighbor(0) != 0) {
         TriangleTopo &voisinB = triangles[triangleASplit.getNeighbor(0) - 1];
@@ -225,7 +197,7 @@ void Mesh::splitTriangle(int idTri, int idSommet) {
         }
     }
     triangleC.setNeighbor(idTri, 1);
-    triangleC.setNeighbor(triangles.size()+1, 2);
+    triangleC.setNeighbor(triangleB.getId(), 2);
     triangleC.setNeighbor(triangleASplit.getNeighbor(1), 0);
 
     if(triangleASplit.getNeighbor(1) != 0) {
@@ -237,12 +209,16 @@ void Mesh::splitTriangle(int idTri, int idSommet) {
         }
     }
 
-    triangleASplit.setNeighbor(triangles.size()+1 ,0);
-    triangleASplit.setNeighbor(triangles.size()+2 ,1);
+    triangles[triangleASplit.getId() - 1].setNeighbor(triangles.size()+1 ,0);
+    triangles[triangleASplit.getId() - 1].setNeighbor(triangles.size()+2 ,1);
+
+//    triangleASplit.setNeighbor(triangles.size()+1 ,0);
+//    triangleASplit.setNeighbor(triangles.size()+2 ,1);
 
     triangles.push_back(triangleB);
     triangles.push_back(triangleC);
-    triangleASplit.setIdSommet(idSommet, 2);
+    triangles[triangleASplit.getId() - 1].setIdSommet(idSommet, 2);
+
     nbFaces+=2;
 }
 

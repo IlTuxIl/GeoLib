@@ -18,12 +18,15 @@ public:
     int getId()const{return this->id;}
     void setNeighbor(int idtri, int id);
     int getNeighbor(int id) const;
+    vector3 getVoronoi(){return voronoi;};
+    vector3 computeVoronoi(vector3 a, vector3 b, vector3 c);
     int estExterieur();
     friend std::ostream& operator<< (std::ostream&, const TriangleTopo&);
 
 private:
     int id = -1;
     int t[3] = {-1, -1, -1};
+    vector3 voronoi;
 };
 
 

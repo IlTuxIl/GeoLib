@@ -12,14 +12,17 @@
 class Render {
 public:
     Render() = default;
-    Render(char* shaderName, Triangulation m);
-    void draw(Orbiter cam);
+    Render(char* shaderName, Triangulation* m);
+    void draw(Orbiter cam, bool voronoi, bool update);
 private:
-    GLuint initBuffer();
-    Triangulation mesh;
+    GLuint updateBuffer(bool voronoi);
+    GLuint initBuffer(bool isVoronoi);
 
-    GLuint program;
-    GLuint vao;
+    Triangulation* mesh;
+    GLuint indexBuffer;
+    GLuint program[2];
+    GLuint vao[2];
+    GLuint buffer[2];
 };
 
 

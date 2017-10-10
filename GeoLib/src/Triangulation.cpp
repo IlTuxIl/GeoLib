@@ -136,6 +136,10 @@ vertexCirculator Triangulation::vertexAround(int p) {
     return vertexCirculator(this, p);
 }
 
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
 bool estTrigo(const vector3& a, const vector3& b){
     return a.cross(b).z > 0;
 }
@@ -189,6 +193,14 @@ bool Triangulation::loadPoints(char *filename) {
         if(estDans != -1){
             splitTriangle(estDans, i);
 
+//            if(triangles[estDans - 1].estExterieur() == -1){
+//                for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+//                    if((*it) == estDans) {
+//                        idExterieur.erase(it);
+//                    }
+//                }
+//            }
+//            checkExterieur(estDans);
             if(triangles[triangles.size()-1].estExterieur() != -1)
                 idExterieur.push_back(triangles[triangles.size()-1].getId());
 
@@ -247,13 +259,14 @@ bool Triangulation::loadPoints(char *filename) {
                                     t.setNeighbor(map[{min1, max1}], 1);
                                     int idTri = map[{min1, max1}];
                                     linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min1, max1});
-                                    if(triangles[idTri-1].estExterieur() == -1){
-                                        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                                            if((*it) == idTri) {
-                                                idExterieur.erase(it);
-                                            }
-                                        }
-                                    }
+//                                    if(triangles[idTri-1].estExterieur() == -1){
+//                                        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+//                                            if((*it) == idTri) {
+//                                                idExterieur.erase(it);
+//                                            }
+//                                        }
+//                                    }
+//                                    checkExterieur(idTri);
                                 }
 
                                 if(map[{min2, max2}] == 0) {
@@ -263,38 +276,92 @@ bool Triangulation::loadPoints(char *filename) {
                                     t.setNeighbor(map[{min2, max2}], 2);
                                     int idTri = map[{min2, max2}];
                                     linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min2, max2});
-                                    if(triangles[idTri-1].estExterieur() == -1){
-                                        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                                            if((*it) == idTri) {
-                                                idExterieur.erase(it);
-                                            }
-                                        }
-                                    }
+//                                    if(triangles[idTri-1].estExterieur() == -1){
+//                                        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+//                                            if((*it) == idTri) {
+//                                                idExterieur.erase(it);
+//                                            }
+//                                        }
+//                                    }
+//                                    checkExterieur(idTri);
                                 }
                                 nbFaces++;
                                 triangles.push_back(t);
                                 idExterieur.push_back(t.getId());
-                                if((*tri)->estExterieur() == -1){
-                                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                                        if((*it) == (*tri)->getId()) {
-                                            idExterieur.erase(it);
-                                        }
-                                    }
-                                }
+//                                if((*tri)->estExterieur() == -1){
+//                                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+//                                        if((*it) == (*tri)->getId()) {
+//                                            idExterieur.erase(it);
+//                                        }
+//                                    }
+//                                }
+//                                checkExterieur((*tri)->getId());
                             }
                         }
                     }
                 }
                 else{
-                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                        if((*it) == (*tri)->getId()) {
-                            idExterieur.erase(it);
-                        }
-                    }
+//                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+//                        if((*it) == (*tri)->getId()) {
+//                            idExterieur.erase(it);
+//                        }
+//                    }
+//                    checkExterieur((*tri)->getId());
                 }
             }
+            for(int i = 0; i < idExterieur.size(); i++)
+                checkExterieur(idExterieur[i]);
         }
     }
+}
+
+bool Triangulation::loadPointsDelaunay(char *filename) {
+        std::ifstream ifs;
+        ifs.open(filename);
+        if(ifs.bad()){
+            std::cout<<"Impossible d'ouvrir le fichier "<<filename<<" en lecture \n";
+            return false;
+        }
+        ifs >> nbVertex;
+        vertex.reserve(static_cast<unsigned long>(nbVertex));
+        triangles.reserve(static_cast<unsigned long>(nbVertex));
+
+        for(int i = 0; i < nbVertex; i ++){
+            Sommet s;
+            ifs >> s.x >> s.y >> s.z;
+            vertex.push_back(s);
+        }
+
+        ifs.close();
+
+        //1er Triangle
+        if(estTrigo((vertex[0] - vertex[1]), (vertex[0] - vertex[2]))){
+            TriangleTopo t(0,1,2,1);
+            t.setNeighbor(0, 0);
+            t.setNeighbor(0, 1);
+            t.setNeighbor(0, 2);
+            vertex[0].setIdTriangle(1);
+            vertex[1].setIdTriangle(1);
+            vertex[2].setIdTriangle(1);
+            triangles.push_back(t);
+            idExterieur.push_back(t.getId());
+        }
+        else{
+            TriangleTopo t(0,2,1,1);
+            t.setNeighbor(0, 0);
+            t.setNeighbor(0, 1);
+            t.setNeighbor(0, 2);
+            vertex[0].setIdTriangle(1);
+            vertex[1].setIdTriangle(1);
+            vertex[2].setIdTriangle(1);
+            triangles.push_back(t);
+            idExterieur.push_back(t.getId());
+        }
+        nbFaces = 1;
+
+        for(int i = 3; i < nbVertex; i++)
+            addPointDelaunay(i);
+
 }
 
 int Triangulation::appartientMesh(int idPoint) {
@@ -322,10 +389,6 @@ int Triangulation::appartientMesh(int idPoint) {
     }
     //std::cout << cpt << " " << triangles.size() << std::endl;
     return cur.getId();
-//    for(faceIterator it = faceBegin(); it < faceEnd(); it++){
-//        if(appartient((*it)->getId(), idPoint))
-//            return (*it)->getId();
-//    }
 }
 
 void Triangulation::makeDelaunay() {
@@ -370,20 +433,24 @@ void Triangulation::makeDelaunay() {
 }
 
 void Triangulation::addPointDelaunay(int idPoint) {
-    Sommet s = vertex[idPoint];
     std::queue<int> file;
     int test = appartientMesh(idPoint);
-    if(test != 1){
+//    std::cout << test << std::endl;
+    if(test != -1){
         splitTriangle(test, idPoint);
+
+        checkExterieur(test);
+
         if(triangles[triangles.size()-1].estExterieur() != -1)
             idExterieur.push_back(triangles[triangles.size()-1].getId());
 
         if(triangles[triangles.size()-2].estExterieur() != -1)
             idExterieur.push_back(triangles[triangles.size() - 2].getId());
+        vertex[idPoint].setIdTriangle(triangles.size() - 1);
 
         file.push(test);
-        file.push(triangles.size() - 2);
         file.push(triangles.size() - 1);
+        file.push(triangles.size());
     }
     else{
         //cas exterieur
@@ -437,13 +504,7 @@ void Triangulation::addPointDelaunay(int idPoint) {
                                 t.setNeighbor(map[{min1, max1}], 1);
                                 int idTri = map[{min1, max1}];
                                 linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min1, max1});
-                                if(triangles[idTri-1].estExterieur() == -1){
-                                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                                        if((*it) == idTri) {
-                                            idExterieur.erase(it);
-                                        }
-                                    }
-                                }
+//                                checkExterieur(idTri);
                             }
 
                             if(map[{min2, max2}] == 0) {
@@ -453,56 +514,45 @@ void Triangulation::addPointDelaunay(int idPoint) {
                                 t.setNeighbor(map[{min2, max2}], 2);
                                 int idTri = map[{min2, max2}];
                                 linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min2, max2});
-                                if(triangles[idTri-1].estExterieur() == -1){
-                                    for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                                        if((*it) == idTri) {
-                                            idExterieur.erase(it);
-                                        }
-                                    }
-                                }
+//                                checkExterieur(idTri);
                             }
                             nbFaces++;
                             triangles.push_back(t);
+                            file.push(triangles.size() - 1);
                             idExterieur.push_back(t.getId());
-                            if((*tri)->estExterieur() == -1){
-                                for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                                    if((*it) == (*tri)->getId()) {
-                                        idExterieur.erase(it);
-                                    }
-                                }
-                            }
+//                            checkExterieur((*tri)->getId());
                         }
                     }
                 }
             }
             else{
-                for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
-                    if((*it) == (*tri)->getId()) {
-                        idExterieur.erase(it);
-                    }
-                }
+//                checkExterieur((*tri)->getId());
             }
         }
 
     }
 
+    for(int i = 0; i < idExterieur.size(); i++)
+        checkExterieur(idExterieur[i]);
+
     while(file.size() > 0){
         int top = file.front();
-        for(int p = 0; p < vertex.size(); p++){
+        for(int p = 0; p < idPoint; p++){
             bool ok = false;
             if(appartientCercle(top, p) < 0.0f){
 //                int idTri = vertex[p].getIdTriangle();
                 faceCirculator fc = faceAround(p);
                 bool fin = false;
                 do {
-                    if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1) {
+                    //FAUX -> si plusieurs triangles adjacent
+                    if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1 && (*fc)->getIndexInTriangle(p) != -1) {
                         ok = true;
                         fin = true;
                         flipTriangle(top, (*fc)->getId());
-                        //PAS BON
                         for(int voisin = 0; voisin < 3; voisin++){
                             if(triangles[top - 1].getNeighbor(voisin) > 0 && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId())
                                 file.push(triangles[top - 1].getNeighbor(voisin));
+
                             if((*fc)->getNeighbor(voisin) > 0 && (*fc)->getNeighbor(voisin) != top)
                                 file.push((*fc)->getNeighbor(voisin));
                         }
@@ -517,6 +567,13 @@ void Triangulation::addPointDelaunay(int idPoint) {
         }
         file.pop();
     }
+}
+
+void Triangulation::addPoint(float x, float y){
+    Sommet s = vector3(x,y,0.0);
+    vertex.push_back(s);
+    nbVertex++;
+    addPointDelaunay(vertex.size()-1);
 }
 
 //Tri1 et Tri2 adjacent
@@ -590,6 +647,15 @@ bool Triangulation::flipTriangle(int idTri1, int idTri2) {
             break;
     }
 
+//    checkExterieur(t1Id);
+//    checkExterieur(t2Id);
+
+    for(int i = 0; i < 3; i++){
+        vertex[tri1.getIdSommet(i)].setIdTriangle(tri1.getId());
+        vertex[tri2.getIdSommet(i)].setIdTriangle(tri2.getId());
+    }
+
+
     if(!okt1 && t1Ext)
         idExterieur.push_back(t1Id);
     if(!okt2 && t2Ext)
@@ -597,22 +663,65 @@ bool Triangulation::flipTriangle(int idTri1, int idTri2) {
     return true;
 }
 
-Sommet* Triangulation::getVertex(){
-    return vertex.data();
+std::vector<float> Triangulation::getVertex(){
+
+    std::vector<float> ret;
+    ret.reserve(nbVertex * 3);
+    for(Sommet s : vertex){
+        ret.push_back((float)s.x);
+        ret.push_back((float)s.y);
+        ret.push_back((float)s.z);
+    }
+
+    return ret;
 }
 
-int* Triangulation::getIndex() {
-    int* ret = new int(3 * sizeof(int) * nbFaces);
-    int i = 0;
+std::vector<unsigned int> Triangulation::getIndex() {
+    std::vector<unsigned int> ret;
+    ret.reserve(nbFaces * 3);
+
     for(TriangleTopo t : triangles){
-        ret[i] = t.getIdSommet(0);
-        i++;
-        ret[i] = t.getIdSommet(1);
-        i++;
-        ret[i] = t.getIdSommet(2);
-        i++;
+        ret.push_back((unsigned int) t.getIdSommet(1));
+        ret.push_back((unsigned int) t.getIdSommet(0));
+        ret.push_back((unsigned int) t.getIdSommet(2));
     }
+
     return ret;
+}
+
+std::vector<float> Triangulation::getVoronoi(){
+    std::vector<float> ret;
+    ret.reserve(nbFaces * 6);
+
+    for(int i = 0; i < vertex.size(); i++){
+        faceCirculator fc = faceAround(i);
+
+        do{
+            vector3 v1 = vertex[(*fc)->getIdSommet(0)];
+            vector3 v2 = vertex[(*fc)->getIdSommet(1)];
+            vector3 v3 = vertex[(*fc)->getIdSommet(2)];
+
+            vector3 vor = (*fc)->computeVoronoi(v1, v2, v3);
+            ret.push_back((float)vor.x);
+            ret.push_back((float)vor.y);
+            ret.push_back((float)vor.z);
+            std::cout << (*fc)->getId() << std::endl;
+            fc++;
+        }while(fc != faceAround(i));
+
+    }
+    std::cout << ret.size() << std::endl;
+    return ret;
+}
+
+void Triangulation::checkExterieur(int idTri) {
+    if(triangles[idTri - 1].estExterieur() == -1){
+        for(std::vector<int>::const_iterator it = idExterieur.begin(); it < idExterieur.end(); it++){
+            if((*it) == idTri) {
+                idExterieur.erase(it);
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -753,18 +862,12 @@ TriangleTopo* faceCirculator::operator*() {
 }
 
 faceCirculator faceCirculator::operator++(int) {
-    //BUG SI MODIFICATION DU CUR TRIANGLE
-//    if (changeTriangle) {
-
-        //std::cout << curTriangle->getIndexInTriangle(startIndex) + 1 << std::endl;
-
         if (curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) == 0){
             TriangleTopo *tmpTri = &mesh->getTriangles(mesh->getVertex(startIndex).getIdTriangle() - 1);
-
+            curTriangle = tmpTri;
             while (tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) != 0) {
                 tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) - 1);
                 curTriangle = tmpTri;
-//                std::cout << curTriangle->getId() << std::endl;
             }
             changeTriangle = false;
             curIndex = curTriangle->getId();
@@ -772,11 +875,6 @@ faceCirculator faceCirculator::operator++(int) {
             curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) - 1);
             curIndex = curTriangle->getId();
         }
-//    }
-//    else{
-//        changeTriangle = true;
-//        curIndex = curTriangle->getId();
-//    }
 }
 
 bool faceCirculator::operator!=(const faceCirculator &fc) {
