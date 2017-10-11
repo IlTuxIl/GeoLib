@@ -5,140 +5,9 @@
 #include <iostream>
 #include <map>
 #include <queue>
-#include "../include/Triangulation.h"
+#include "Triangulation.h"
+#include "Iterateur.h"
 
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-vertexIterator::vertexIterator(Mesh *_mesh, int startIndex) {
-    mesh = _mesh;
-    index = startIndex;
-}
-
-void vertexIterator::nextVertex() {
-    index++;
-    if(index >= mesh->getNbVertex())
-        index = mesh->getNbVertex();
-}
-
-Sommet* vertexIterator::getVertex() {
-    if(index >= 0 && index < mesh->getNbVertex())
-        return &(mesh->getVertex(index));
-    return new Sommet();
-}
-
-Sommet* vertexIterator::operator*() {
-    if(index >= 0 && index < mesh->getNbVertex())
-        return &(mesh->getVertex(index));
-    return new Sommet();}
-
-vertexIterator vertexIterator::operator++(int) {
-    index++;
-    if(index >= mesh->getNbVertex())
-        index = mesh->getNbVertex();
-    return *this;
-}
-
-vertexIterator vertexIterator::operator--(int) {
-    index--;
-    if(index < 0)
-        index = 0;
-    return *this;
-}
-
-bool vertexIterator::operator<(const vertexIterator &fi) {
-    return index<fi.index;
-}
-
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-faceIterator::faceIterator(std::vector<TriangleTopo>* tab, int startIndex) {
-    tabTri = tab;
-    index = startIndex;
-}
-
-void faceIterator::nextFace() {
-    index++;
-    if(index > tabTri->size())
-        index = static_cast<int>(tabTri->size());
-}
-
-TriangleTopo* faceIterator::operator*() {
-    if(index < tabTri->size() && index >= 0)
-        return &(*tabTri)[index];
-    else
-        return new TriangleTopo();
-}
-
-TriangleTopo* faceIterator::getFace() {
-    if(index < tabTri->size() && index >= 0) {
-        return &(*tabTri)[index];
-    }
-    else {
-        return new TriangleTopo();
-    }
-}
-
-faceIterator faceIterator::operator++(int) {
-    index = index + 1;
-    if(index > tabTri->size())
-        index = static_cast<int>(tabTri->size());
-    return *this;
-}
-
-faceIterator faceIterator::operator--(int) {
-    index = index - 1;
-    if(index < 0)
-        index = 0;
-    return *this;
-}
-
-bool faceIterator::operator<(const faceIterator &fi) {
-    return index < fi.index;
-}
-
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-faceIterator Triangulation::faceBegin() {
-    return faceIterator(&triangles, 0);
-}
-
-faceIterator Triangulation::faceEnd() {
-    return faceIterator(&triangles, getNbFaces());
-}
-
-faceExtIterator Triangulation::faceExtBegin() {
-    return faceExtIterator(&triangles, &idExterieur, 0);
-}
-
-faceExtIterator Triangulation::faceExtEnd() {
-    return faceExtIterator(&triangles, &idExterieur, static_cast<int>(idExterieur.size()));
-}
-
-vertexIterator Triangulation::vertexBegin() {
-    return vertexIterator(this, 0);
-}
-
-vertexIterator Triangulation::vertexEnd() {
-    return vertexIterator(this, getNbVertex());
-}
-
-faceCirculator Triangulation::faceAround(int p) {
-    return faceCirculator(this, p);
-}
-
-vertexCirculator Triangulation::vertexAround(int p) {
-    return vertexCirculator(this, p);
-}
-
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
 
 bool estTrigo(const vector3& a, const vector3& b){
     return a.cross(b).z > 0;
@@ -435,7 +304,6 @@ void Triangulation::makeDelaunay() {
 void Triangulation::addPointDelaunay(int idPoint) {
     std::queue<int> file;
     int test = appartientMesh(idPoint);
-//    std::cout << test << std::endl;
     if(test != -1){
         splitTriangle(test, idPoint);
 
@@ -504,7 +372,6 @@ void Triangulation::addPointDelaunay(int idPoint) {
                                 t.setNeighbor(map[{min1, max1}], 1);
                                 int idTri = map[{min1, max1}];
                                 linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min1, max1});
-//                                checkExterieur(idTri);
                             }
 
                             if(map[{min2, max2}] == 0) {
@@ -514,19 +381,14 @@ void Triangulation::addPointDelaunay(int idPoint) {
                                 t.setNeighbor(map[{min2, max2}], 2);
                                 int idTri = map[{min2, max2}];
                                 linkTriangle(static_cast<int>(triangles.size() + 1), idTri, {min2, max2});
-//                                checkExterieur(idTri);
                             }
                             nbFaces++;
                             triangles.push_back(t);
-                            file.push(triangles.size() - 1);
+                            file.push(t.getId());
                             idExterieur.push_back(t.getId());
-//                            checkExterieur((*tri)->getId());
                         }
                     }
                 }
-            }
-            else{
-//                checkExterieur((*tri)->getId());
             }
         }
 
@@ -550,10 +412,10 @@ void Triangulation::addPointDelaunay(int idPoint) {
                         fin = true;
                         flipTriangle(top, (*fc)->getId());
                         for(int voisin = 0; voisin < 3; voisin++){
-                            if(triangles[top - 1].getNeighbor(voisin) > 0 && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId())
+                            if(triangles[top - 1].getNeighbor(voisin) > 0/* && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId()*/)
                                 file.push(triangles[top - 1].getNeighbor(voisin));
 
-                            if((*fc)->getNeighbor(voisin) > 0 && (*fc)->getNeighbor(voisin) != top)
+                            if((*fc)->getNeighbor(voisin) > 0/* && (*fc)->getNeighbor(voisin) != top*/)
                                 file.push((*fc)->getNeighbor(voisin));
                         }
                     }
@@ -562,8 +424,8 @@ void Triangulation::addPointDelaunay(int idPoint) {
                     fc++;
                 }while(fc != faceAround(p) || fin);
             }
-            if(ok)
-                break;
+//            if(ok)
+//                break;
         }
         file.pop();
     }
@@ -691,26 +553,47 @@ std::vector<unsigned int> Triangulation::getIndex() {
 
 std::vector<float> Triangulation::getVoronoi(){
     std::vector<float> ret;
+    std::map<couple, int> map;
     ret.reserve(nbFaces * 6);
 
-    for(int i = 0; i < vertex.size(); i++){
+    for(int i = 0; i < vertex.size(); i++) {
         faceCirculator fc = faceAround(i);
+        bool fin = false;
 
-        do{
-            vector3 v1 = vertex[(*fc)->getIdSommet(0)];
-            vector3 v2 = vertex[(*fc)->getIdSommet(1)];
-            vector3 v3 = vertex[(*fc)->getIdSommet(2)];
-
-            vector3 vor = (*fc)->computeVoronoi(v1, v2, v3);
-            ret.push_back((float)vor.x);
-            ret.push_back((float)vor.y);
-            ret.push_back((float)vor.z);
-            std::cout << (*fc)->getId() << std::endl;
+        while (!fin) {
+            TriangleTopo t1 = *(*fc);
             fc++;
-        }while(fc != faceAround(i));
+            TriangleTopo t2 = *(*fc);
 
+            if (!(fc != faceAround(i)))
+                fin = true;
+
+            int p1 = std::min(t1.getId(), t2.getId());
+            int p2 = std::max(t1.getId(), t2.getId());
+            if (map[{p1, p2}] == 0) {
+                map[{p1, p2}] = 1;
+
+                vector3 v1 = vertex[t1.getIdSommet(0)];
+                vector3 v2 = vertex[t1.getIdSommet(1)];
+                vector3 v3 = vertex[t1.getIdSommet(2)];
+
+                vector3 vor = t1.computeVoronoi(v1, v2, v3);
+                ret.push_back((float) vor.x);
+                ret.push_back((float) vor.y);
+                ret.push_back((float) vor.z);
+
+                v1 = vertex[t2.getIdSommet(0)];
+                v2 = vertex[t2.getIdSommet(1)];
+                v3 = vertex[t2.getIdSommet(2)];
+
+                vor = t2.computeVoronoi(v1, v2, v3);
+                ret.push_back((float) vor.x);
+                ret.push_back((float) vor.y);
+                ret.push_back((float) vor.z);
+
+            }
+        }
     }
-    std::cout << ret.size() << std::endl;
     return ret;
 }
 
@@ -724,205 +607,35 @@ void Triangulation::checkExterieur(int idTri) {
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
 
-vertexCirculator::vertexCirculator(Mesh *_mesh, int _index) {
-    mesh = _mesh;
-    changeTriangle = true;
-    if (_index >= 0 && _index < mesh->getNbVertex()) {
-        Sommet s = mesh->getVertex(_index);
-        curTriangle = &mesh->getTriangles(s.getIdTriangle()-1);
-        curIndex = curTriangle->getIdSommet(curTriangle->getIndexInTriangle(_index) + 1);
-        startIndex = _index;
-    }
+faceIterator Triangulation::faceBegin() {
+    return faceIterator(&triangles, 0);
 }
 
-void vertexCirculator::nextVertex() {
-    if(changeTriangle){
-        curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) - 1) - 1);
-
-        if(curTriangle->getId() == 0){
-            changeTriangle = false;
-            Sommet s = mesh->getVertex(startIndex);
-            TriangleTopo* tmpTri = &mesh->getTriangles(s.getIdTriangle()-1);
-
-            while(tmpTri->getId() != 0){
-                curTriangle = tmpTri;
-                tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) + 1) - 1);
-            }
-            curIndex = curTriangle->getIdSommet(curTriangle->getIndexInTriangle(startIndex) - 1);
-        }
-        else {
-            curIndex = curTriangle->getIdSommet(curTriangle->getIndexInTriangle(startIndex) + 1);
-        }
-    }
-    else{
-        changeTriangle = true;
-        curIndex = curTriangle->getIdSommet(curTriangle->getIndexInTriangle(startIndex) + 1);
-    }
+faceIterator Triangulation::faceEnd() {
+    return faceIterator(&triangles, getNbFaces());
 }
 
-Sommet *vertexCirculator::operator*() {
-    if(curIndex < mesh->getNbFaces() && curIndex >= 0)
-        return &mesh->getVertex(curIndex);
-    else
-        return new Sommet();
+faceExtIterator Triangulation::faceExtBegin() {
+    return faceExtIterator(&triangles, &idExterieur, 0);
 }
 
-int vertexCirculator::getIndex() {
-    return curIndex;
+faceExtIterator Triangulation::faceExtEnd() {
+    return faceExtIterator(&triangles, &idExterieur, static_cast<int>(idExterieur.size()));
 }
 
-Sommet *vertexCirculator::getVertex() {
-    if(curIndex < mesh->getNbVertex() && curIndex >= 0)
-        return &mesh->getVertex(curIndex);
-    else
-        return new Sommet();
+vertexIterator Triangulation::vertexBegin() {
+    return vertexIterator(this, 0);
 }
 
-vertexCirculator vertexCirculator::operator++(int) {
-    if(changeTriangle){
-        curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) - 1) - 1);
-
-        if(curTriangle->getId() == 0){
-            changeTriangle = false;
-            Sommet s = mesh->getVertex(startIndex);
-            TriangleTopo* tmpTri = &mesh->getTriangles(s.getIdTriangle()-1);
-
-            while(tmpTri->getId() != 0){
-                curTriangle = tmpTri;
-                tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) + 1) - 1);
-            }
-            curIndex = curTriangle->getIdSommet(curTriangle->getIndexInTriangle(startIndex) - 1);
-        }
-        else {
-            curIndex = curTriangle->getIdSommet(curTriangle->getIndexInTriangle(startIndex) + 1);
-        }
-    }
-    else{
-        changeTriangle = true;
-        curIndex = curTriangle->getIdSommet(curTriangle->getIndexInTriangle(startIndex) + 1);
-    }
+vertexIterator Triangulation::vertexEnd() {
+    return vertexIterator(this, getNbVertex());
 }
 
-bool vertexCirculator::operator!=(const vertexCirculator &vc) {
-    return curIndex != vc.curIndex;
+faceCirculator Triangulation::faceAround(int p) {
+    return faceCirculator(this, p);
 }
 
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-faceCirculator::faceCirculator(Mesh *_mesh, int idSommet) {
-    mesh = _mesh;
-    changeTriangle = true;
-    if (idSommet >= 0 && idSommet < mesh->getNbVertex()) {
-        Sommet s = mesh->getVertex(idSommet);
-        curTriangle = &mesh->getTriangles(s.getIdTriangle()-1);
-        curIndex = curTriangle->getId();
-        startIndex = idSommet;
-    }
-}
-
-void faceCirculator::nextFace() {
-    if (curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) == 0){
-        TriangleTopo *tmpTri = &mesh->getTriangles(mesh->getVertex(startIndex).getIdTriangle() - 1);
-
-        while (tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) != 0) {
-            tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) - 1);
-            curTriangle = tmpTri;
-//                std::cout << curTriangle->getId() << std::endl;
-        }
-        changeTriangle = false;
-        curIndex = curTriangle->getId();
-    } else {
-        curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) - 1);
-        curIndex = curTriangle->getId();
-    }
-}
-
-int faceCirculator::getIndex() {
-    return curIndex;
-}
-
-TriangleTopo* faceCirculator::getFace() {
-    if(curIndex - 1 < mesh->getNbFaces() && curIndex - 1 >= 0)
-        return &mesh->getTriangles(curIndex - 1);
-    else
-        return new TriangleTopo();
-}
-
-TriangleTopo* faceCirculator::operator*() {
-    if(curIndex - 1 < mesh->getNbFaces() && curIndex - 1 >= 0)
-        return &mesh->getTriangles(curIndex - 1);
-    else
-        return new TriangleTopo();
-}
-
-faceCirculator faceCirculator::operator++(int) {
-        if (curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) == 0){
-            TriangleTopo *tmpTri = &mesh->getTriangles(mesh->getVertex(startIndex).getIdTriangle() - 1);
-            curTriangle = tmpTri;
-            while (tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) != 0) {
-                tmpTri = &mesh->getTriangles(tmpTri->getNeighbor(tmpTri->getIndexInTriangle(startIndex) - 1) - 1);
-                curTriangle = tmpTri;
-            }
-            changeTriangle = false;
-            curIndex = curTriangle->getId();
-        } else {
-            curTriangle = &mesh->getTriangles(curTriangle->getNeighbor(curTriangle->getIndexInTriangle(startIndex) + 1) - 1);
-            curIndex = curTriangle->getId();
-        }
-}
-
-bool faceCirculator::operator!=(const faceCirculator &fc) {
-    return curIndex != fc.curIndex;
-}
-
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-faceExtIterator::faceExtIterator(std::vector<TriangleTopo> *tri, std::vector<int>* tab, int startIndex) {
-    index = startIndex;
-    tabIndex = tab;
-    tabTriangle = tri;
-}
-
-void faceExtIterator::nextFace() {
-    index++;
-    if(index > tabIndex->size())
-        index = static_cast<int>(tabIndex->size());
-}
-
-TriangleTopo *faceExtIterator::getFace() {
-    if(index < tabIndex->size() && index >= 0)
-        return &(*tabTriangle)[(*tabIndex)[index]-1];
-    else
-        return new TriangleTopo();
-}
-
-TriangleTopo *faceExtIterator::operator*() {
-    if(index < tabIndex->size() && index >= 0)
-        return &(*tabTriangle)[(*tabIndex)[index]-1];
-    else
-        return new TriangleTopo();
-}
-
-faceIterator faceExtIterator::operator++(int) {
-    index++;
-    if(index > tabIndex->size())
-        index = static_cast<int>(tabIndex->size());
-}
-
-faceIterator faceExtIterator::operator--(int) {
-    index--;
-    if(index < 0)
-        index = 0;
-}
-
-bool faceExtIterator::operator<(const faceExtIterator &fi) {
-    return index < fi.index;
+vertexCirculator Triangulation::vertexAround(int p) {
+    return vertexCirculator(this, p);
 }

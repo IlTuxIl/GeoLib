@@ -19,14 +19,14 @@ GLuint Render::initBuffer(bool voronoi){
 
     if(!voronoi)
         sizeBuffer = mesh->getNbVertex() * sizeof(float) * 3;// + mesh->getVoronoi().size() * sizeof(float) * 3;
-    else
-        sizeBuffer = mesh->getVoronoi().size() * sizeof(float) * 3;
-
+    else {
+        cptVoronoi = mesh->getVoronoi().size();
+        sizeBuffer = cptVoronoi * sizeof(float) * 3;
+    }
     glGenBuffers(1, &buffer[index]);
     glBindBuffer(GL_ARRAY_BUFFER, buffer[index]);
     glBufferData(GL_ARRAY_BUFFER, sizeBuffer, nullptr, GL_DYNAMIC_DRAW);
 
-//    sizeBuffer = mesh->getNbVertex() * sizeof(float) * 3;
     size_t offset = 0;
     if(!voronoi)
         glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, &mesh->getVertex()[0]);
@@ -58,20 +58,18 @@ GLuint Render::updateBuffer(bool voronoi){
 
     glBindVertexArray(vao[index]);
     size_t sizeBuffer;
+
+
     if(!voronoi)
         sizeBuffer = mesh->getNbVertex() * sizeof(float) * 3;
-    else
-        sizeBuffer = mesh->getVoronoi().size() * sizeof(float) * 3;
-
-//    std::cout << mesh->getVoronoi().size() << std::endl;
-//
-//    for(vector3 v : mesh->getVoronoi())
-//        std::cout << v;
+    else{
+        cptVoronoi = mesh->getVoronoi().size();
+        sizeBuffer = cptVoronoi * sizeof(float) * 3;
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, buffer[index]);
     glBufferData(GL_ARRAY_BUFFER, sizeBuffer, nullptr, GL_DYNAMIC_DRAW);
 
-//    sizeBuffer = mesh->getNbVertex() * sizeof(float) * 3;
     size_t offset = 0;
     if(!voronoi)
         glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, &mesh->getVertex()[0]);
@@ -121,6 +119,6 @@ void Render::draw(Orbiter cam, bool voronoi, bool update) {
         glBindVertexArray(vao[1]);
         glUseProgram(program[1]);
         program_uniform(program[1], "mvpMatrix", mvp);
-        glDrawArrays(GL_LINES, 0, mesh->getVoronoi().size()/2);
+        glDrawArrays(GL_LINES, 0, cptVoronoi/3);
     }
 }

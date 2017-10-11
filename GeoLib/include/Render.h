@@ -23,6 +23,7 @@ private:
     GLuint program[2];
     GLuint vao[2];
     GLuint buffer[2];
+    int cptVoronoi;
 };
 
 

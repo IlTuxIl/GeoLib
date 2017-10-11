@@ -15,16 +15,6 @@ public:
     int init( )
     {
         tri.loadPointsDelaunay("test.points");
-
-        tri.addPoint(0.493791, 0.365771);
-        tri.addPoint(0.797702, 0.030102);
-
-//        tri.addPoint(0.274517, 0.16471);
-//        tri.addPoint(0.676241, 0.420366);
-//        tri.loadOFF("data/queen.off");
-//        tri.loadPoints("test.points");
-//        tri.makeDelaunay();
-
         r = Render("data/shader1.glsl", &tri);
 
         m_camera.lookat(Point(-5,-5), Point(5,5));
@@ -76,12 +66,11 @@ public:
             Vector v2(v.x, v.y, v.z);
             v2 = normalize(v2);
 
-            std::cout << v2.x*m_camera.position().z << ", " << v2.y*m_camera.position().z << std::endl;
+            std::cout << -v2.x*(m_camera.position().z)/v2.z << ", " << -v2.y*(m_camera.position().z)/v2.z << std::endl;
 
-            tri.addPoint(v2.x*m_camera.position().z, v2.y*m_camera.position().z);
+            tri.addPoint(-v2.x*(m_camera.position().z)/v2.z, -v2.y*(m_camera.position().z)/v2.z);
             update = true;
             can_add = false;
-//            std::cout << "check" << std::endl;
         }
         if(mb & SDL_BUTTON(3))         // le bouton droit est enfonce
             m_camera.move(mx);
@@ -109,6 +98,7 @@ int main( int argc, char **argv )
 {
     Framebuffer tp;
     tp.run();
+
     return 0;
 }
 
