@@ -21,7 +21,7 @@ GLuint Render::initBuffer(bool voronoi){
         sizeBuffer = mesh->getNbVertex() * sizeof(float) * 3;// + mesh->getVoronoi().size() * sizeof(float) * 3;
     else {
         cptVoronoi = mesh->getVoronoi().size();
-        sizeBuffer = cptVoronoi * sizeof(float) * 3;
+        sizeBuffer = cptVoronoi * sizeof(float);
     }
     glGenBuffers(1, &buffer[index]);
     glBindBuffer(GL_ARRAY_BUFFER, buffer[index]);
@@ -50,6 +50,13 @@ GLuint Render::initBuffer(bool voronoi){
     return vao[index];
 }
 
+Render::~Render() {
+//                   glDeleteBuffers(1, &indexBuffer);
+
+//    release_program(program[0]);
+//    release_program(program[1]);
+}
+
 GLuint Render::updateBuffer(bool voronoi){
 
     int index = 0;
@@ -64,7 +71,7 @@ GLuint Render::updateBuffer(bool voronoi){
         sizeBuffer = mesh->getNbVertex() * sizeof(float) * 3;
     else{
         cptVoronoi = mesh->getVoronoi().size();
-        sizeBuffer = cptVoronoi * sizeof(float) * 3;
+        sizeBuffer = cptVoronoi * sizeof(float);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, buffer[index]);

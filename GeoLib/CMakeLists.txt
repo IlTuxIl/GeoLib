@@ -6,9 +6,9 @@ set(CMAKE_BUILD_TYPE RelWithDebInfo)
 #add_subdirectory(gKit)
 find_package(GLEW REQUIRED)
 
-#include_directories(gKit/include)
+include_directories(gKit/src)
 include_directories(include)
 
 file( GLOB GKIT_SOURCES gKit/src/*.cpp)
-file( GLOB GEOLIB_SOURCES src/*.cpp )
-add_library(GeoLib ${GEOLIB_SOURCES} ${GKIT_SOURCES})
+file( GLOB GEOLIB_SOURCES src/*.cpp include/*.h)
+add_library(GeoLib ${GEOLIB_SOURCES} ${GKIT_SOURCES} src/RenderMaillage2D.cpp include/RenderMaillage2D.h)

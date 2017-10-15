@@ -8,6 +8,7 @@
 
 #include "Mesh.h"
 #include "Iterateur.h"
+#include "Maillage2D.h"
 
 class Triangulation : public Mesh {
 public:
@@ -28,7 +29,7 @@ public:
     std::vector<unsigned int> getIndex();
     std::vector<float> getVoronoi();
 
-
+    Maillage2D crust();
     void addPoint(float x, float y);
     std::vector<int> idExterieur;
 

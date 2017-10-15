@@ -408,7 +408,7 @@ void Triangulation::addPointDelaunay(int idPoint) {
                 do {
                     //FAUX -> si plusieurs triangles adjacent
                     if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1 && (*fc)->getIndexInTriangle(p) != -1) {
-                        ok = true;
+//                        ok = true;
                         fin = true;
                         flipTriangle(top, (*fc)->getId());
                         for(int voisin = 0; voisin < 3; voisin++){
@@ -572,7 +572,7 @@ std::vector<float> Triangulation::getVoronoi(){
             int p2 = std::max(t1.getId(), t2.getId());
             if (map[{p1, p2}] == 0) {
                 map[{p1, p2}] = 1;
-
+//                std::cout << p1 << " " << p2 << std::endl;
                 vector3 v1 = vertex[t1.getIdSommet(0)];
                 vector3 v2 = vertex[t1.getIdSommet(1)];
                 vector3 v3 = vertex[t1.getIdSommet(2)];
@@ -607,6 +607,35 @@ void Triangulation::checkExterieur(int idTri) {
     }
 }
 
+Maillage2D Triangulation::crust() {
+    std::vector<int> restant;
+    std::vector<Sommet> points = vertex;
+    int nbVertexOrig = nbVertex;
+    std::vector<float> pVoronoi = getVoronoi();
+
+    for(int i = 0; i < pVoronoi.size(); i++){
+        addPoint(pVoronoi[i], pVoronoi[i+1]);
+        i++;
+        i++;
+    }
+
+    for(TriangleTopo t : triangles){
+        int cpt = 0;
+        for(int i = 0; i < 3; i++){
+            if(t.getIdSommet(i) < nbVertexOrig)
+                cpt++;
+        }
+        if(cpt == 2){
+            for(int i = 0; i < 3; i++){
+                if(t.getIdSommet(i) < nbVertexOrig){
+                    restant.push_back(t.getIdSommet(i));
+                }
+            }
+        }
+    }
+
+    return Maillage2D(restant, points);
+}
 
 faceIterator Triangulation::faceBegin() {
     return faceIterator(&triangles, 0);

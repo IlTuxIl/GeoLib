@@ -12,6 +12,7 @@
 class Render {
 public:
     Render() = default;
+    ~Render();
     Render(char* shaderName, Triangulation* m);
     void draw(Orbiter cam, bool voronoi, bool update);
 private:
