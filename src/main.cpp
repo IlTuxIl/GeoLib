@@ -14,19 +14,10 @@ public:
 
     int init( )
     {
-        tri.loadPointsDelaunay("test.points");
+        tri.loadPointsDelaunay("test.points", 3);
 
         m_camera.lookat(Point(-5,-5), Point(5,5));
 
-//        tri.addPoint(-0.951903, 1.15327);
-//        tri.addPoint(0.0915303, 1.50108);
-//        tri.addPoint(0.860375, 1.46447);
-//        tri.addPoint(1.42786, 1.02513);
-//        tri.addPoint(1.62922, 0.256281);
-//        tri.addPoint(1.46447, -0.695622);
-//        tri.addPoint(0.659011, -1.18988);
-//        tri.addPoint(-0.585786, -1.2448);
-//        tri.addPoint(-1.29971, -0.732234);
         r = Render("data/shader1.glsl", &tri);
         m = RenderMaillage2D("data/shader1.glsl", &m2d);
         glPointSize(20);
@@ -115,6 +106,7 @@ protected:
 
 
 int main( int argc, char **argv ){
+//    srand(time(NULL));
     Framebuffer tp;
     tp.run();
 

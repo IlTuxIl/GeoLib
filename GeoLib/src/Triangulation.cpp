@@ -184,7 +184,7 @@ bool Triangulation::loadPoints(char *filename) {
     }
 }
 
-bool Triangulation::loadPointsDelaunay(char *filename) {
+bool Triangulation::loadPointsDelaunay(char *filename, int nbCoords) {
         std::ifstream ifs;
         ifs.open(filename);
         if(ifs.bad()){
@@ -195,9 +195,16 @@ bool Triangulation::loadPointsDelaunay(char *filename) {
         vertex.reserve(static_cast<unsigned long>(nbVertex));
         triangles.reserve(static_cast<unsigned long>(nbVertex));
 
-        for(int i = 0; i < nbVertex; i ++){
+        for(int i = 0; i < nbVertex; i ++) {
             Sommet s;
-            ifs >> s.x >> s.y >> s.z;
+            if (nbCoords == 3){
+                ifs >> s.x >> s.y >> s.z;
+            }
+            else if (nbCoords == 2){
+                ifs >> s.x >> s.y;
+                s.z = 0.0;
+            }
+
             vertex.push_back(s);
         }
 
@@ -227,7 +234,8 @@ bool Triangulation::loadPointsDelaunay(char *filename) {
             idExterieur.push_back(t.getId());
         }
         nbFaces = 1;
-
+        for(int i = 0; i < vertex.size(); i++)
+            perturbe(i, epsilon);
         for(int i = 3; i < nbVertex; i++)
             addPointDelaunay(i);
 
@@ -399,33 +407,38 @@ void Triangulation::addPointDelaunay(int idPoint) {
 
     while(file.size() > 0){
         int top = file.front();
-        for(int p = 0; p < idPoint; p++){
-            bool ok = false;
-            if(appartientCercle(top, p) < 0.0f){
-//                int idTri = vertex[p].getIdTriangle();
-                faceCirculator fc = faceAround(p);
-                bool fin = false;
-                do {
-                    //FAUX -> si plusieurs triangles adjacent
-                    if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1 && (*fc)->getIndexInTriangle(p) != -1) {
-//                        ok = true;
-                        fin = true;
-                        flipTriangle(top, (*fc)->getId());
-                        for(int voisin = 0; voisin < 3; voisin++){
-                            if(triangles[top - 1].getNeighbor(voisin) > 0/* && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId()*/)
-                                file.push(triangles[top - 1].getNeighbor(voisin));
+        for(int k = 0; k < 3; k++) {
+            TriangleTopo triTopo = triangles[top - 1];
+            for(int l = 0; l < 3; l++){
+                if(triTopo.getNeighbor(k) != 0) {
+                    int p = triangles[triTopo.getNeighbor(k) - 1].getIdSommet(l);
+                    if (appartientCercle(top, p) < 0.0f) {
+                        //int idTri = vertex[p].getIdTriangle();
+                        faceCirculator fc = faceAround(p);
+                        bool fin = false;
+                        do {
+                            //FAUX -> si plusieurs triangles adjacent
+                            if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1 &&
+                                (*fc)->getIndexInTriangle(p) != -1) {
+                                //                        ok = true;
+                                fin = true;
+                                flipTriangle(top, (*fc)->getId());
+                                for (int voisin = 0; voisin < 3; voisin++) {
+                                    if (triangles[top - 1].getNeighbor(voisin) >
+                                        0/* && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId()*/)
+                                        file.push(triangles[top - 1].getNeighbor(voisin));
 
-                            if((*fc)->getNeighbor(voisin) > 0/* && (*fc)->getNeighbor(voisin) != top*/)
-                                file.push((*fc)->getNeighbor(voisin));
-                        }
+                                    if ((*fc)->getNeighbor(voisin) > 0/* && (*fc)->getNeighbor(voisin) != top*/)
+                                        file.push((*fc)->getNeighbor(voisin));
+                                }
+                            }
+                            if (fin)
+                                break;
+                            fc++;
+                        } while (fc != faceAround(p) || fin);
                     }
-                    if(fin)
-                        break;
-                    fc++;
-                }while(fc != faceAround(p) || fin);
+                }
             }
-//            if(ok)
-//                break;
         }
         file.pop();
     }
@@ -434,6 +447,7 @@ void Triangulation::addPointDelaunay(int idPoint) {
 void Triangulation::addPoint(float x, float y){
     Sommet s = vector3(x,y,0.0);
     vertex.push_back(s);
+    perturbe(vertex.size()-1, epsilon);
     nbVertex++;
     addPointDelaunay(vertex.size()-1);
 }
@@ -483,7 +497,6 @@ bool Triangulation::flipTriangle(int idTri1, int idTri2) {
         }
     }
 
-
     bool t1Ext = tri1.estExterieur() != -1;
     bool t2Ext = tri2.estExterieur() != -1;
 
@@ -509,14 +522,10 @@ bool Triangulation::flipTriangle(int idTri1, int idTri2) {
             break;
     }
 
-//    checkExterieur(t1Id);
-//    checkExterieur(t2Id);
-
     for(int i = 0; i < 3; i++){
         vertex[tri1.getIdSommet(i)].setIdTriangle(tri1.getId());
         vertex[tri2.getIdSommet(i)].setIdTriangle(tri2.getId());
     }
-
 
     if(!okt1 && t1Ext)
         idExterieur.push_back(t1Id);
@@ -608,7 +617,7 @@ void Triangulation::checkExterieur(int idTri) {
 }
 
 Maillage2D Triangulation::crust() {
-    std::vector<int> restant;
+    std::vector<int> ret;
     std::vector<Sommet> points = vertex;
     int nbVertexOrig = nbVertex;
     std::vector<float> pVoronoi = getVoronoi();
@@ -628,13 +637,25 @@ Maillage2D Triangulation::crust() {
         if(cpt == 2){
             for(int i = 0; i < 3; i++){
                 if(t.getIdSommet(i) < nbVertexOrig){
-                    restant.push_back(t.getIdSommet(i));
+                    ret.push_back(t.getIdSommet(i));
                 }
             }
         }
     }
 
-    return Maillage2D(restant, points);
+    return Maillage2D(ret, points);
+}
+
+void Triangulation::perturbe(int idPoint, double epsilon) {
+    Sommet& s = vertex[idPoint];
+
+    double p1 = (double) rand() / RAND_MAX;
+    double p2 = (double) rand() / RAND_MAX;
+    double p3 = (double) rand() / RAND_MAX;
+
+    s.x += -(epsilon/2) + p1 * epsilon;
+    s.y += -(epsilon/2) + p2 * epsilon;
+    s.z += -(epsilon/2) + p3 * epsilon;
 }
 
 faceIterator Triangulation::faceBegin() {

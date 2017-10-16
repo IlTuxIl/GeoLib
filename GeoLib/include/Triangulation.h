@@ -13,7 +13,7 @@
 class Triangulation : public Mesh {
 public:
     bool loadPoints(char* filename);
-    bool loadPointsDelaunay(char* filename);
+    bool loadPointsDelaunay(char* filename, int nbCoord = 3);
 
     faceIterator faceBegin();
     faceIterator faceEnd();
@@ -28,12 +28,15 @@ public:
     std::vector<float> getVertex();
     std::vector<unsigned int> getIndex();
     std::vector<float> getVoronoi();
+    void perturbe(int idPoint, double epsilon);
+
 
     Maillage2D crust();
     void addPoint(float x, float y);
     std::vector<int> idExterieur;
 
 private:
+    double epsilon = 0.0001;
     void checkExterieur(int idTri);
     void addPointDelaunay(int idPoint);
     int appartientMesh(int idPoint);
