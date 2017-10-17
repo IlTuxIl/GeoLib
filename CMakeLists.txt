@@ -4,10 +4,14 @@ project(GeoAlgo)
 
 INCLUDE(FindPkgConfig)
 
-set(GEOLIB_INCLUDE GeoLib/include)
-#set(GKIT_INCLUDE GeoLib/gKit/include)
+#set(GEOLIB_INCLUDE GeoLib/include)
+set(GEOLIBREF_INCLUDE GeoLibRefactor/include)
 
-add_subdirectory(GeoLib)
+#include_directories(${GEOLIB_INCLUDE})
+include_directories(${GEOLIBREF_INCLUDE})
+
+#add_subdirectory(GeoLib)
+add_subdirectory(GeoLibRefactor)
 
 file( GLOB SOURCE src/*.cpp )
 
@@ -17,8 +21,5 @@ find_package(GLEW REQUIRED)
 PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
 PKG_SEARCH_MODULE(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
 
-include_directories(${GEOLIB_INCLUDE})
-#include_directories(${GKIT_INCLUDE})
-
 add_executable(GeoAlgo ${SOURCE})
-target_link_libraries(GeoAlgo GeoLib ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${GLEW_LIBRARY})
+target_link_libraries(GeoAlgo GeoLibRefactor ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${GLEW_LIBRARY})

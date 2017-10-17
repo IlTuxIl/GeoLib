@@ -11,4 +11,4 @@ include_directories(include)
 
 file( GLOB GKIT_SOURCES gKit/src/*.cpp)
 file( GLOB GEOLIB_SOURCES src/*.cpp include/*.h)
-add_library(GeoLib ${GEOLIB_SOURCES} ${GKIT_SOURCES} src/RenderMaillage2D.cpp include/RenderMaillage2D.h)
+add_library(GeoLib ${GEOLIB_SOURCES} ${GKIT_SOURCES})

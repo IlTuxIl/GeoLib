@@ -31,8 +31,6 @@ public:
 
     TriangleTopo& getTriangles(int index);
 
-    void draw();
-
     bool appartient(int idTri, int idPoint);
 
     double appartientCercle(int idTri, int s) const;
