@@ -8,25 +8,46 @@
 #include <GL/glew.h>
 #include "Triangulation2D.h"
 #include "../../GeoLib/gKit/src/orbiter.h"
+#include "../gKit/src/color.h"
 
 namespace GeoLib {
-
+    template <class T>
     class Render {
       public:
         Render() = default;
-        Render(TriangulationDelaunay2D *_sp);
-        void setProgram(GLuint p){program = p;};
-        void draw(Orbiter cam, bool update, bool voronoi, bool maillage);
-      protected:
-        GLuint initBuffer(bool voronoi);
-        GLuint updateBuffer(bool voronoi);
 
-        TriangulationDelaunay2D* mesh;
+      protected:
+        void initBuffer();
+        void updateBuffer();
+
+        Color c;
+        T* mesh;
         GLuint indexBuffer;
         GLuint program;
-        GLuint vao[2];
-        GLuint buffer[2];
-        int cptVoronoi;
+        GLuint vao;
+        GLuint buffer;
+    };
+
+    class Render1D : Render<Maillage1D>{
+      public:
+        Render1D() = default;
+        Render1D(Maillage1D* _mesh);
+        void draw(Orbiter cam, bool update);
+
+        void setColor(Color col){c = col;}
+        void setProgram(GLuint p){program = p;};
+
+    };
+
+    class Render2D : Render<Maillage2D>{
+    public:
+        Render2D() = default;
+        Render2D(Maillage2D* _mesh);
+        void draw(Orbiter cam, bool update);
+
+        void setColor(Color col){c = col;}
+        void setProgram(GLuint p){program = p;};
+
     };
 
 }

@@ -11,10 +11,17 @@ class Framebuffer : public App {
 
     int init() {
         tri.loadPoint("test.points", 3);
-
+        test = tri.getVoronoiMesh();
+        test2 = tri.getMaillage();
         m_camera.lookat(Point(-5, -5), Point(5, 5));
 
-        r = Render(&tri);
+
+        renderVoronoi = Render1D(&test);
+        renderVoronoi.setColor(Color(0,0,1));
+
+        r = Render2D(&test2);
+        r.setColor(Color(1,0,0));
+
         glPointSize(20);
         glClearColor(0.2, 0.2, 0.2, 1.f);
         glDepthFunc(GL_LESS);
@@ -56,9 +63,12 @@ class Framebuffer : public App {
 
             std::cout << -res.x * (m_camera.position().z) / res.z << ", " << res.y * (m_camera.position().z) / res.z
                       << std::endl;
-            tri.addPoint(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z);
+//            tri.addPoint(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z);
             update = true;
             can_add = false;
+
+            test = tri.getVoronoiMesh();
+            test2 = tri.getMaillage();
         }
         if (mb & SDL_BUTTON(3))         // le bouton droit est enfonce
             m_camera.move(mx);
@@ -72,17 +82,23 @@ class Framebuffer : public App {
         if (key_state('v'))
             voronoi = true;
 
-        r.draw(m_camera, voronoi, update, false);
+        r.draw(m_camera, update);
+
+        if(voronoi)
+            renderVoronoi.draw(m_camera, update);
         return 1;
     }
 
   protected:
     Orbiter m_camera;
-    Render r;
+    Render1D renderVoronoi;
+    Render2D r;
     TriangulationDelaunay2D tri;
     bool can_add = true;
     bool can_crust = true;
     bool isMaillage = false;
+    Maillage1D test;
+    Maillage2D test2;
 };
 
 

@@ -10,14 +10,10 @@
 #include "Iterateur.h"
 #include "ScatterPlot.h"
 #include "Triangle.h"
+#include "couple.h"
+#include "Maillage.h"
 
 namespace GeoLib {
-
-    struct couple{
-        int p1,p2;
-        bool operator< (const couple& c2) const
-        {return p1 < c2.p1 || p2 < c2.p2;}
-    };
 
     class Triangulation2D {
       public:
@@ -34,7 +30,7 @@ namespace GeoLib {
         std::vector<double> getVertex();
         std::vector<unsigned int> getIndex();
 
-
+        Maillage2D getMaillage();
 //        faceIterator faceBegin() {return faceIterator(&triangles, 0);};
 //        faceIterator faceEnd() { return faceIterator(&triangles, triangles.size());};
         faceExtIterator faceExtBegin() { return faceExtIterator(&triangles, &idTriExtern, 0);};
@@ -73,6 +69,7 @@ namespace GeoLib {
     class TriangulationDelaunay2D : public Triangulation2D{
       public:
         std::vector<double> getVoronoi();
+        Maillage1D getVoronoiMesh();
       protected:
         void addTriangleIntern(int idTri, int idPoint);
         void addTriangleExtern(int idPoint);

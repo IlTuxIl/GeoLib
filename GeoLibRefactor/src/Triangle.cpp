@@ -2,7 +2,7 @@
 // Created by julien on 17/10/17.
 //
 
-#include "../include/Triangle.h"
+#include "Triangle.h"
 namespace GeoLib {
 
     TriangleTopo::TriangleTopo() {

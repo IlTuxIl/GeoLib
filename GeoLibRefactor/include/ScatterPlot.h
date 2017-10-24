@@ -19,6 +19,7 @@ namespace GeoLib {
         vector3&operator[](int i){return plot[i];}
         void reserve(int a){plot.reserve(a);};
         std::vector<vector3> getVector(){ return plot;};
+        const std::vector<vector3> getVector() const { return plot;};
 
     private:
         std::vector<vector3> plot;

@@ -9,15 +9,21 @@
 
 namespace GeoLib {
 
-    Render::Render(TriangulationDelaunay2D *_sp){
+    Render1D::Render1D(Maillage1D *_sp){
         mesh = _sp;
         program = read_program("data/shader1.glsl");
-        vao[0] = initBuffer(false);
-        vao[1] = initBuffer(true);
+        initBuffer();
         glUseProgram(0);
     }
 
-    void Render::draw(Orbiter cam, bool voronoi, bool update, bool maillage) {
+    Render2D::Render2D(Maillage2D *_sp){
+        mesh = _sp;
+        program = read_program("data/shader1.glsl");
+        initBuffer();
+        glUseProgram(0);
+    }
+
+    void Render1D::draw(Orbiter cam, bool update) {
         Transform model = Identity();
         Transform view = cam.view();
         Transform projection = cam.projection(1024, 640, 45);
@@ -25,104 +31,90 @@ namespace GeoLib {
         Transform mvp= projection * mv;
 
         if(update) {
-            updateBuffer(false);
-            updateBuffer(true);
+            updateBuffer();
         }
 
-        glBindVertexArray(vao[0]);
+        glBindVertexArray(vao);
         glUseProgram(program);
         program_uniform(program, "mvpMatrix", mvp);
-        program_uniform(program, "color", Color(1,0,0));
+        program_uniform(program, "color", c);
 
-        glDrawElements(GL_TRIANGLES, mesh->getIndex().size(), GL_UNSIGNED_INT, 0);
+//        std::cout << mesh->getIndiceBufferSize()/(sizeof(int) * 3) << std::endl;
 
-        if(voronoi){
-            glBindVertexArray(vao[1]);
-            glUseProgram(program);
-            program_uniform(program, "mvpMatrix", mvp);
-            program_uniform(program, "color", Color(0,0,1));
-
-            glDrawArrays(GL_LINES, 0, cptVoronoi/3);
-        }
+        glDrawElements(GL_LINES, mesh->getIndiceBufferSize()/(sizeof(int)), GL_UNSIGNED_INT, 0);
     }
 
-    GLuint Render::initBuffer(bool voronoi) {
-        int index = 0;
-        if(voronoi)
-            index = 1;
+    void Render2D::draw(Orbiter cam, bool update) {
+        Transform model = Identity();
+        Transform view = cam.view();
+        Transform projection = cam.projection(1024, 640, 45);
+        Transform mv= view * model;
+        Transform mvp= projection * mv;
 
-        glGenVertexArrays(1, &vao[index]);
-        glBindVertexArray(vao[index]);
-
-        size_t sizeBuffer;
-
-        if(!voronoi)
-            sizeBuffer = mesh->getNbVertex() * sizeof(double) * 3;// + mesh->getVoronoi().size() * sizeof(float) * 3;
-        else {
-            cptVoronoi = mesh->getVoronoi().size();
-            sizeBuffer = cptVoronoi * sizeof(double);
+        if(update) {
+            updateBuffer();
         }
-        glGenBuffers(1, &buffer[index]);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer[index]);
+
+        glBindVertexArray(vao);
+        glUseProgram(program);
+        program_uniform(program, "mvpMatrix", mvp);
+        program_uniform(program, "color", c);
+
+        glDrawElements(GL_TRIANGLES, mesh->getIndiceBufferSize()/(sizeof(int)), GL_UNSIGNED_INT, 0);
+    }
+
+    template<class T>
+    void Render<T>::initBuffer() {
+
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+
+        size_t sizeBuffer = static_cast<T*>(mesh)->getVertexBufferSize();
+        std::cout << sizeBuffer << std::endl;
+
+        glGenBuffers(1, &buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeBuffer, nullptr, GL_DYNAMIC_DRAW);
 
         size_t offset = 0;
-        if(!voronoi)
-            glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, &mesh->getVertex()[0]);
-        else
-            glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, &mesh->getVoronoi()[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, static_cast<T*>(mesh)->getVertexBuffer());
 
         glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, 0, (const void *) offset);
         glEnableVertexAttribArray(0);
 
-        if(!voronoi) {
-            sizeBuffer = mesh->getNbFaces() * sizeof(unsigned int) * 3;
+        sizeBuffer = static_cast<T*>(mesh)->getIndiceBufferSize();
+        std::cout << sizeBuffer << std::endl;
 
-            glGenBuffers(1, &indexBuffer);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeBuffer, &mesh->getIndex().front(), GL_DYNAMIC_DRAW);
-        }
+        glGenBuffers(1, &indexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeBuffer, static_cast<T*>(mesh)->getIndiceBuffer(), GL_DYNAMIC_DRAW);
+
         glBindVertexArray(0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        return vao[index];
     }
 
-    GLuint Render::updateBuffer(bool voronoi) {
-        int index = 0;
-        if(voronoi)
-            index = 1;
+    template<class T>
+    void Render<T>::updateBuffer() {
 
-        glBindVertexArray(vao[index]);
-        size_t sizeBuffer;
-
-
-        if(!voronoi)
-            sizeBuffer = mesh->getNbVertex() * sizeof(double) * 3;
-        else{
-            cptVoronoi = mesh->getVoronoi().size();
-            sizeBuffer = cptVoronoi * sizeof(double);
-        }
-
-        glBindBuffer(GL_ARRAY_BUFFER, buffer[index]);
+        glBindVertexArray(vao);
+        size_t sizeBuffer = static_cast<T*>(mesh)->getVertexBufferSize();
+        std::cout << sizeBuffer << std::endl;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeBuffer, nullptr, GL_DYNAMIC_DRAW);
 
         size_t offset = 0;
-        if(!voronoi)
-            glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, &mesh->getVertex()[0]);
-        else
-            glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, &mesh->getVoronoi()[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, offset, sizeBuffer, static_cast<T*>(mesh)->getVertexBuffer());
 
-        if(!voronoi) {
-            sizeBuffer = mesh->getNbFaces() * sizeof(unsigned int) * 3;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeBuffer, &mesh->getIndex().front(), GL_DYNAMIC_DRAW);
-        }
+        sizeBuffer = static_cast<T*>(mesh)->getIndiceBufferSize();
+        std::cout << sizeBuffer << std::endl;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeBuffer, static_cast<T*>(mesh)->getIndiceBuffer(), GL_DYNAMIC_DRAW);
+
         glBindVertexArray(0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        return vao[0];
     }
 }

@@ -58,9 +58,8 @@ namespace GeoLib{
             idTriExtern.push_back(t.getId());
         }
 
-        for(int i = 3; i < nbVertex; i++) {
+        for(int i = 3; i < nbVertex; i++)
             addPoint(i);
-        }
     }
 
     void Triangulation2D::addPoint(double x, double y) {
@@ -84,19 +83,18 @@ namespace GeoLib{
     }
 
     bool Triangulation2D::appartientTriangle(int idTri, int idPoint) const {
+
         TriangleTopo t = triangles[idTri-1];
-        Sommet s1 = vertex[t.getIdSommet(0)];
 
+        vector3 s1 = vertex[t.getIdSommet(0)];
+        vector3 s2 = vertex[t.getIdSommet(1)];
+        vector3 s3 = vertex[t.getIdSommet(2)];
+        vector3 p = vertex[idPoint];
 
+        bool a = ((s1 - s2).cross(s1 - p)).dot(((s1 - p).cross(s1 - s3))) >= 0;
+        bool b = ((s2 - s1).cross(s2 - p)).dot(((s2 - p).cross(s2 - s3))) >= 0;
+        bool c = ((s3 - s1).cross(s3 - p)).dot(((s3 - p).cross(s3 - s2))) >= 0;
 
-
-        Sommet s2 = vertex[t.getIdSommet(1)];
-        Sommet s3 = vertex[t.getIdSommet(2)];
-        Sommet p = vertex[idPoint];
-
-        bool a = (vector3(s1 - s2).cross(vector3(s1 - p))).dot((vector3(s1 - p).cross(vector3(s1 - s3)))) >= 0;
-        bool b = (vector3(s2 - s1).cross(vector3(s2 - p))).dot((vector3(s2 - p).cross(vector3(s2 - s3)))) >= 0;
-        bool c = (vector3(s3 - s1).cross(vector3(s3 - p))).dot((vector3(s3 - p).cross(vector3(s3 - s2)))) >= 0;
         return a&&b&&c;
     }
 
@@ -119,15 +117,14 @@ namespace GeoLib{
         s.setZ(pow(s.x() ,2) + pow(s.y(), 2));
 
         return vector3(vector3(p2-p1).cross(p3 - p1)).dot(s-p1);
-
     }
 
     int Triangulation2D::appartientMesh(int idPoint) {
+
         Sommet but = vertex[idPoint];
         TriangleTopo cur = triangles[rand() % triangles.size()];
-        int cpt = 0;
-        while(!appartientTriangle(cur.getId(), idPoint)) {
-            cpt++;
+
+        while(appartientTriangle(cur.getId(), idPoint) == 0) {
             for (int i = 0; i < 3; i++) {
                 Sommet s1 = vertex[cur.getIdSommet(i + 1)];
                 Sommet s2 = vertex[cur.getIdSommet(i + 2)];
@@ -138,13 +135,10 @@ namespace GeoLib{
                         break;
                     }
                 }
-                if(i == 2) {
-                    //std::cout << cpt << " " << triangles.size() << std::endl;
+                if(i == 2)
                     return -1;
-                }
             }
         }
-        //std::cout << cpt << " " << triangles.size() << std::endl;
         return cur.getId();
     }
 
@@ -362,14 +356,34 @@ namespace GeoLib{
         return ret;
     }
 
+    Maillage2D Triangulation2D::getMaillage() {
+        Maillage2D ret;
+        ScatterPlot SP;
+        std::vector<index> VC;
+        for(vector3 s : vertex.getVector()){
+            SP.addPlot(s);
+        }
+        for(TriangleTopo t : triangles){
+            index i;
+            i.setX(t.getIdSommet(0));
+            i.setY(t.getIdSommet(1));
+            i.setZ(t.getIdSommet(2));
+            VC.push_back(i);
+        }
+
+        ret.setIndiceBuffer(VC);
+        ret.setVertexBuffer(SP);
+        return ret;
+    }
+
     void Triangulation2D::perturbe(int idPoint) {
-        Sommet& s = vertex[idPoint];
+        Sommet s = vertex[idPoint];
 
         double p1 = (double) rand() / RAND_MAX;
         double p2 = (double) rand() / RAND_MAX;
 
-        s.setX(s.x() + -(epsilon/2) + p1 * epsilon);
-        s.setY(s.y() + -(epsilon/2) + p2 * epsilon);
+        vertex[idPoint].setX(s.x() + -(epsilon/2) + p1 * epsilon);
+        vertex[idPoint].setY(s.y() + -(epsilon/2) + p2 * epsilon);
     }
 
     std::vector<double> TriangulationDelaunay2D::getVoronoi() {
@@ -415,6 +429,50 @@ namespace GeoLib{
                 }
             }
         }
+        return ret;
+    }
+
+    Maillage1D TriangulationDelaunay2D::getVoronoiMesh() {
+
+        Maillage1D ret;
+        ScatterPlot SP;
+        std::vector<couple> VC;
+
+        std::map<couple, int> map;
+
+        for(TriangleTopo t : triangles){
+            vector3 v1 = vertex[t.getIdSommet(0)];
+            vector3 v2 = vertex[t.getIdSommet(1)];
+            vector3 v3 = vertex[t.getIdSommet(2)];
+
+            vector3 vor = t.computeVoronoi(v1, v2, v3);
+            SP.addPlot(vor);
+        }
+
+        for(int i = 0; i < vertex.getSize(); i++) {
+            faceCirculator fc = faceAround(i);
+            bool fin = false;
+
+            while (!fin) {
+                TriangleTopo t1 = *(*fc);
+                fc++;
+                TriangleTopo t2 = *(*fc);
+
+                if (!(fc != faceAround(i)))
+                    fin = true;
+
+                int p1 = std::min(t1.getId(), t2.getId());
+                int p2 = std::max(t1.getId(), t2.getId());
+                if (map[{p1, p2}] == 0) {
+                    map[{p1, p2}] = 1;
+
+                    VC.push_back({p1 - 1, p2 - 1});
+                }
+            }
+        }
+
+        ret.setIndiceBuffer(VC);
+        ret.setVertexBuffer(SP);
         return ret;
     }
 
