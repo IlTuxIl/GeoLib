@@ -10,31 +10,24 @@
 #include "Triplet.h"
 
 namespace GeoLib {
-    template<class T>
     class Maillage{
-      public:
-        void setVertexBuffer(const ScatterPlot& p){vertex = p;};
-        void setIndiceBuffer(const std::vector<T>& p){ indice = p;};
 
-        vector3* getVertexBuffer() { return vertex.getVector().data();}
-        T* getIndiceBuffer() { return indice.data();}
-        int getVertexBufferSize() const { return  vertex.getSize() * sizeof(double) * 3;};
-        virtual int getIndiceBufferSize() const = 0;
-      protected:
+      public:
+        void setNbIndiceFace(int v);
+        void setVertexBuffer(ScatterPlot& p);
+        void setIndiceBuffer(const std::vector<unsigned int>& p);
+
+        int getNbIndiceFace() const;
+        std::vector<float> getVertex();
+        std::vector<unsigned int> getIndice();
+        size_t getVertexBufferSize() const;
+        size_t getIndiceBufferSize() const;
+
+    protected:
         ScatterPlot vertex;
-        std::vector<T> indice;
+        std::vector<unsigned int> indice;
+        int nbIndicesFace;
     };
-
-    class Maillage1D : public Maillage<couple> {
-      public:
-        int getIndiceBufferSize() const { return indice.size() * sizeof(int) * 2;};
-    };
-
-    class Maillage2D : public Maillage<GeoLib::index>{
-      public:
-        int getIndiceBufferSize() const { return indice.size() * sizeof(int) * 3;};
-    };
-
 }
 
 #endif //GEOALGO_MAILLAGE_H

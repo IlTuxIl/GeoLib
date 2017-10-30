@@ -10,4 +10,4 @@ include_directories(include)
 file( GLOB SOURCE src/*.cpp include/*.h)
 
 find_package(GLEW REQUIRED)
-add_library(GeoLibRefactor ${SOURCE} ${GKIT_SOURCES})
+add_library(GeoLibRefactor ${SOURCE} ${GKIT_SOURCES} src/Maillage.cpp)

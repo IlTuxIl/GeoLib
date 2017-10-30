@@ -30,7 +30,7 @@ namespace GeoLib {
         std::vector<double> getVertex();
         std::vector<unsigned int> getIndex();
 
-        Maillage2D getMaillage();
+        Maillage getMaillage();
 //        faceIterator faceBegin() {return faceIterator(&triangles, 0);};
 //        faceIterator faceEnd() { return faceIterator(&triangles, triangles.size());};
         faceExtIterator faceExtBegin() { return faceExtIterator(&triangles, &idTriExtern, 0);};
@@ -63,13 +63,14 @@ namespace GeoLib {
         ScatterVertex vertex;
         std::vector<TriangleTopo> triangles;
         std::vector<int> idTriExtern;
-        double epsilon;
+        double epsilon = 0.0001;
     };
 
     class TriangulationDelaunay2D : public Triangulation2D{
       public:
-        std::vector<double> getVoronoi();
-        Maillage1D getVoronoiMesh();
+        std::vector<float> getVoronoi();
+        Maillage getVoronoiMesh();
+        Maillage crust();
       protected:
         void addTriangleIntern(int idTri, int idPoint);
         void addTriangleExtern(int idPoint);

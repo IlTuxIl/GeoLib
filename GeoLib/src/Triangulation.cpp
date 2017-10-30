@@ -616,7 +616,7 @@ void Triangulation::checkExterieur(int idTri) {
     }
 }
 
-Maillage2D Triangulation::crust() {
+Maillage2D Triangulation2D::crust() {
     std::vector<int> ret;
     std::vector<Sommet> points = vertex;
     int nbVertexOrig = nbVertex;

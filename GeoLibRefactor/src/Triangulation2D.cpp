@@ -356,23 +356,22 @@ namespace GeoLib{
         return ret;
     }
 
-    Maillage2D Triangulation2D::getMaillage() {
-        Maillage2D ret;
+    Maillage Triangulation2D::getMaillage() {
+        Maillage ret;
         ScatterPlot SP;
-        std::vector<index> VC;
+        std::vector<unsigned int> VC;
         for(vector3 s : vertex.getVector()){
             SP.addPlot(s);
         }
         for(TriangleTopo t : triangles){
-            index i;
-            i.setX(t.getIdSommet(0));
-            i.setY(t.getIdSommet(1));
-            i.setZ(t.getIdSommet(2));
-            VC.push_back(i);
+            VC.push_back((unsigned int) t.getIdSommet(1));
+            VC.push_back((unsigned int) t.getIdSommet(0));
+            VC.push_back((unsigned int) t.getIdSommet(2));
         }
 
         ret.setIndiceBuffer(VC);
         ret.setVertexBuffer(SP);
+        ret.setNbIndiceFace(3);
         return ret;
     }
 
@@ -386,8 +385,8 @@ namespace GeoLib{
         vertex[idPoint].setY(s.y() + -(epsilon/2) + p2 * epsilon);
     }
 
-    std::vector<double> TriangulationDelaunay2D::getVoronoi() {
-        std::vector<double> ret;
+    std::vector<float> TriangulationDelaunay2D::getVoronoi() {
+        std::vector<float> ret;
         std::map<couple, int> map;
         ret.reserve(vertex.getSize() * 6);
 
@@ -413,18 +412,18 @@ namespace GeoLib{
                     vector3 v3 = vertex[t1.getIdSommet(2)];
 
                     vector3 vor = t1.computeVoronoi(v1, v2, v3);
-                    ret.push_back( vor.x());
-                    ret.push_back( vor.y());
-                    ret.push_back( vor.z());
+                    ret.push_back((float) vor.x());
+                    ret.push_back((float) vor.y());
+                    ret.push_back((float) vor.z());
 
                     v1 = vertex[t2.getIdSommet(0)];
                     v2 = vertex[t2.getIdSommet(1)];
                     v3 = vertex[t2.getIdSommet(2)];
 
                     vor = t2.computeVoronoi(v1, v2, v3);
-                    ret.push_back( vor.x());
-                    ret.push_back( vor.y());
-                    ret.push_back( vor.z());
+                    ret.push_back((float) vor.x());
+                    ret.push_back((float) vor.y());
+                    ret.push_back((float) vor.z());
 
                 }
             }
@@ -432,11 +431,11 @@ namespace GeoLib{
         return ret;
     }
 
-    Maillage1D TriangulationDelaunay2D::getVoronoiMesh() {
+    Maillage TriangulationDelaunay2D::getVoronoiMesh() {
 
-        Maillage1D ret;
+        Maillage ret;
         ScatterPlot SP;
-        std::vector<couple> VC;
+        std::vector<unsigned int> VC;
 
         std::map<couple, int> map;
 
@@ -466,13 +465,15 @@ namespace GeoLib{
                 if (map[{p1, p2}] == 0) {
                     map[{p1, p2}] = 1;
 
-                    VC.push_back({p1 - 1, p2 - 1});
+                    VC.push_back(p1-1);
+                    VC.push_back(p2-1);
                 }
             }
         }
 
         ret.setIndiceBuffer(VC);
         ret.setVertexBuffer(SP);
+        ret.setNbIndiceFace(2);
         return ret;
     }
 
@@ -611,6 +612,44 @@ namespace GeoLib{
             if(!okt2 && t2Ext)
                 idTriExtern.push_back(t2Id);
             return true;
+    }
+
+    Maillage TriangulationDelaunay2D::crust() {
+        Maillage ret;
+        ScatterPlot SP;
+        int nbVertexOrig = getNbVertex();
+        std::vector<unsigned int> VC;
+        std::vector<float> pVoronoi = getVoronoi();
+
+        for(vector3 s : vertex.getVector()){
+            SP.addPlot(s);
+        }
+
+        for(int i = 0; i < pVoronoi.size(); i++){
+            addPoint(pVoronoi[i], pVoronoi[i+1]);
+            i++;
+            i++;
+        }
+
+        for(TriangleTopo t : triangles){
+            int cpt = 0;
+            for(int i = 0; i < 3; i++){
+                if(t.getIdSommet(i) < nbVertexOrig)
+                    cpt++;
+            }
+            if(cpt == 2){
+                for(int i = 0; i < 3; i++){
+                    if(t.getIdSommet(i) < nbVertexOrig){
+                        VC.push_back(t.getIdSommet(i));
+                    }
+                }
+            }
+        }
+
+        ret.setIndiceBuffer(VC);
+        ret.setVertexBuffer(SP);
+        ret.setNbIndiceFace(2);
+        return ret;
     }
 
 }
