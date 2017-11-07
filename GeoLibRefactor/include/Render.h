@@ -17,6 +17,9 @@
  */
 
 namespace GeoLib {
+    /*!\class Render
+     * \brief Permet d'afficher un Maillage avec OpenGL3.
+     */
     class Render {
 
       public:

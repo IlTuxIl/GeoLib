@@ -15,7 +15,6 @@
  * \brief Itérateur et circulateur pour la triangulation.
  * \author FLECKINGER Julien
  */
-
 namespace GeoLib {
     /*!\class faceCirculator
      * \brief Permet de circuler et de récupérer tous les triangles,

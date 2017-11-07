@@ -14,6 +14,9 @@
  * \author FLECKINGER Julien
  */
 namespace GeoLib {
+    /*!\class Maillage
+     * \brief Class dédié à l'affichage
+     */
     class Maillage{
       public:
         /*!
