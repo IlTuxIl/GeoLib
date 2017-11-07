@@ -1,7 +1,7 @@
 
-#include "../../GeoLibRefactor/gKit/src/app.h"
-#include "../../GeoLibRefactor/gKit/src/vec.h"
-#include "../../GeoLibRefactor/include/Render.h"
+#include "gKit/app.h"
+#include "gKit/vec.h"
+#include "Render.h"
 
 using namespace GeoLib;
 class Framebuffer : public App {

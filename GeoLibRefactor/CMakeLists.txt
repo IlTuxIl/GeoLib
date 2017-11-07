@@ -3,8 +3,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 project(GeoLibRefactor)
 
-include_directories(gKit/src)
-file( GLOB GKIT_SOURCES gKit/src/*.cpp)
+file(GLOB GKIT_SOURCES gKit/*.cpp)
 
 include_directories(include)
 file( GLOB SOURCE src/*.cpp include/*.h)

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <map>
 #include <fstream>
-#include "../include/Triangulation2D.h"
+#include "Triangulation2D.h"
 
 namespace GeoLib{
 

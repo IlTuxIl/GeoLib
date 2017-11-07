@@ -2,7 +2,7 @@
 // Created by julien on 17/10/17.
 //
 
-#include "../include/Sommet.h"
+#include "Sommet.h"
 
 namespace GeoLib{
 

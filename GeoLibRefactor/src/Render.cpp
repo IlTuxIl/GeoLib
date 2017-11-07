@@ -2,11 +2,10 @@
 // Created by julien on 17/10/17.
 //
 
-#include <window.h>
 #include "Render.h"
-#include "../../GeoLib/gKit/src/program.h"
-#include "../../GeoLib/gKit/src/mat.h"
-#include "../../GeoLib/gKit/src/uniforms.h"
+#include "gKit/window.h"
+#include "gKit/program.h"
+#include "gKit/uniforms.h"
 
 namespace GeoLib {
 

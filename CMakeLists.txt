@@ -5,7 +5,7 @@ project(GeoAlgo)
 INCLUDE(FindPkgConfig)
 
 #set(GEOLIB_INCLUDE GeoLib/include)
-set(GEOLIBREF_INCLUDE GeoLibRefactor/include)
+set(GEOLIBREF_INCLUDE GeoLibRefactor/include GeoLibRefactor)
 
 #include_directories(${GEOLIB_INCLUDE})
 include_directories(${GEOLIBREF_INCLUDE})

@@ -10,10 +10,18 @@
 #include "Iterateur.h"
 #include "ScatterPlot.h"
 #include "Triangle.h"
-#include "couple.h"
 #include "Maillage.h"
 
 namespace GeoLib {
+
+    /*!
+     * \struct structure utilisé en interne
+     */
+    struct couple{
+        int p1,p2; //!< couple d'entier
+        bool operator< (const couple& c2) const //!< surcharge de l'opérateur < pour être utilisé dans les maps.
+        {return p1 < c2.p1 || p2 < c2.p2;}
+    };
 
     class Triangulation2D {
       public:
@@ -31,12 +39,8 @@ namespace GeoLib {
         std::vector<unsigned int> getIndex();
 
         Maillage getMaillage();
-//        faceIterator faceBegin() {return faceIterator(&triangles, 0);};
-//        faceIterator faceEnd() { return faceIterator(&triangles, triangles.size());};
-        faceExtIterator faceExtBegin() { return faceExtIterator(&triangles, &idTriExtern, 0);};
-        faceExtIterator faceExtEnd() { return faceExtIterator(&triangles, &idTriExtern, idTriExtern.size());};
-//        vertexIterator vertexBegin() {return vertexIterator(this, 0);};
-//        vertexIterator vertexEnd() {return vertexIterator(this, getNbVertex());};
+        faceExtIterator faceExtBegin() {return faceExtIterator(&triangles, &idTriExtern, 0);};
+        faceExtIterator faceExtEnd() {return faceExtIterator(&triangles, &idTriExtern, idTriExtern.size());};
         faceCirculator faceAround(int p) {return faceCirculator(&triangles, &vertex, p);};
         vertexCirculator vertexAround(int p) {return vertexCirculator(&triangles, p);};
 
