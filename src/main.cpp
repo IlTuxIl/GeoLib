@@ -10,7 +10,8 @@ class Framebuffer : public App {
     Framebuffer() : App(1024, 640) {}
 
     int init() {
-        tri.loadPoint("test.points", 3);
+        tmp.loadPoint("test3.points", 3);
+        tri = tmp.makeDelaunay();
         voronoMesh = tri.getVoronoiMesh();
         triangu = tri.getMaillage();
         m_camera.lookat(Point(-5, -5), Point(5, 5));
@@ -55,6 +56,7 @@ class Framebuffer : public App {
         double dx, dy;
         bool update = false;
         bool afficheVoronoi = false;
+        isMaillage = false;
         unsigned int mb = SDL_GetRelativeMouseState(&mx, &my);
         SDL_GetMouseState(&x, &y);
 
@@ -71,7 +73,7 @@ class Framebuffer : public App {
             tri.addPoint(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z);
             update = true;
             can_add = false;
-
+            haveToUpdateMaillage = true;
             voronoMesh = tri.getVoronoiMesh();
             triangu = tri.getMaillage();
         }
@@ -82,17 +84,16 @@ class Framebuffer : public App {
 
         if (key_state(' ')) {
             can_add = true;
-            can_crust = true;
         }
         if (key_state('v'))
             afficheVoronoi = true;
         if (key_state('m')){
-            if (can_crust){
-                crustMesh = tri.crust();
+            if (haveToUpdateMaillage) {
                 update = true;
-                isMaillage = true;
+                crustMesh = tri.crust();
+                haveToUpdateMaillage = false;
             }
-            can_crust = false;
+            isMaillage = true;
         }
 
         std::vector<bool> affiche;
@@ -108,9 +109,10 @@ class Framebuffer : public App {
   protected:
     Orbiter m_camera;
     Render r;
+    Triangulation2D tmp;
     TriangulationDelaunay2D tri;
     bool can_add = true;
-    bool can_crust = true;
+    bool haveToUpdateMaillage = true;
     bool isMaillage = false;
     Maillage voronoMesh;
     Maillage triangu;
@@ -122,8 +124,6 @@ int main(int argc, char **argv) {
 
         Framebuffer tp;
         tp.run();
-
-//        std::cout << normalize(Vector(2,2,0)) << std::endl;
 
         return 0;
     }

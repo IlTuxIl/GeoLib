@@ -28,11 +28,13 @@ namespace GeoLib {
         {return p1 < c2.p1 || p2 < c2.p2;}
     };
 
+    class TriangulationDelaunay2D;
     /*!\class Triangulation2D
      * \brief Permet de trianguler des points de façon naive + passage en triangulation de delaunay
      */
     class Triangulation2D {
       public:
+        friend class TriangulationDelaunay2D;
         /*!
          * \brief charge des points depuis un fichier
          * @param filename nom du fichier
@@ -68,6 +70,9 @@ namespace GeoLib {
          * @return un Maillage
          */
         Maillage getMaillage();
+
+        TriangulationDelaunay2D makeDelaunay();
+
         faceExtIterator faceExtBegin() {return faceExtIterator(&triangles, &idTriExtern, 0);};
         faceExtIterator faceExtEnd() {return faceExtIterator(&triangles, &idTriExtern, idTriExtern.size());};
         faceCirculator faceAround(int p) {return faceCirculator(&triangles, &vertex, p);};
@@ -122,6 +127,16 @@ namespace GeoLib {
          */
         void checkExterieur(int idTri);
 
+        /*!
+         * \brief Algo de lawson
+         */
+        void lawson(std::queue<int>& queue);
+
+        /*!
+         * \brief flip l'arrete entre tri1 et tri2
+         */
+        bool flipTriangle(int idTri1, int idTri2);
+
         ScatterVertex vertex;
         std::vector<TriangleTopo> triangles;
         std::vector<int> idTriExtern;
@@ -133,6 +148,8 @@ namespace GeoLib {
      */
     class TriangulationDelaunay2D : public Triangulation2D{
       public:
+        TriangulationDelaunay2D() = default;
+        TriangulationDelaunay2D(Triangulation2D& tri);
         /*!
          * \brief renvoie un Maillage pour affichage des cellules de voronoi
          * @return un Maillage
@@ -156,14 +173,6 @@ namespace GeoLib {
          *  \brief surcharge de la fonction addTriangleExtern qui permet de faire du delaunay incremental
          */
         void addTriangleExtern(int idPoint);
-        /*!
-         * \brief flip l'arrete entre tri1 et tri2
-         */
-        bool flipTriangle(int idTri1, int idTri2);
-        /*!
-         * \brief Algo de lawson
-         */
-        void lawson(std::queue<int>& queue);
     };
 }
 

@@ -361,8 +361,152 @@ namespace GeoLib{
         vertex[idPoint].setY(s.y() + -(epsilon/2) + p2 * epsilon);
     }
 
+    void Triangulation2D::lawson(std::queue<int>& file) {
+        while(file.size() > 0){
+            int top = file.front();
+            for(int k = 0; k < 3; k++) {
+                TriangleTopo triTopo = triangles[top - 1];
+                if(triTopo.getNeighbor(k) != 0) {
+                    couple tmp = getArreteAdjacent(triangles[triTopo.getNeighbor(k) - 1], triTopo);
+                    int p = triangles[triTopo.getNeighbor(k) - 1].getIdSommet(3 - tmp.p1 - tmp.p2);
+                    if (appartientCercle(top, p) < 0.0f) {
+                        faceCirculator fc = faceAround(p);
+                        bool fin = false;
+                        do {
+                            if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1 &&
+                                (*fc)->getIndexInTriangle(p) != -1) {
+                                //                        ok = true;
+                                fin = true;
+                                flipTriangle(top, (*fc)->getId());
+                                for (int voisin = 0; voisin < 3; voisin++) {
+                                    if (triangles[top - 1].getNeighbor(voisin) >
+                                        0/* && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId()*/)
+                                        file.push(triangles[top - 1].getNeighbor(voisin));
+
+                                    if ((*fc)->getNeighbor(voisin) > 0/* && (*fc)->getNeighbor(voisin) != top*/)
+                                        file.push((*fc)->getNeighbor(voisin));
+                                }
+                            }
+                            if (fin)
+                                break;
+                            fc++;
+                        } while (fc != faceAround(p) || fin);
+                    }
+                }
+            }
+            file.pop();
+        }
+    }
+
+    bool Triangulation2D::flipTriangle(int idTri1, int idTri2) {
+        TriangleTopo& tri1 = triangles[idTri1-1];
+        TriangleTopo& tri2 = triangles[idTri2-1];
+
+        couple arrete1 = getArreteAdjacent(tri1, tri2);
+        couple arrete2 = getArreteAdjacent(tri2, tri1);
+
+        if(arrete1.p1 == -1 || arrete2.p1 == -1)
+            return false;
+
+        int indexT1 = 3 - arrete1.p1 - arrete1.p2;
+        int indexT2 = 3 - arrete2.p1 - arrete2.p2;
+
+        int idVoisin1 = tri1.getNeighbor(arrete1.p2);
+        int idVoisin2 = tri2.getNeighbor(arrete2.p2);
+
+        tri1.setIdSommet(tri2.getIdSommet(indexT2), arrete1.p1);
+        tri2.setIdSommet(tri1.getIdSommet(indexT1), arrete2.p1);
+
+        tri1.setNeighbor(tri2.getId(), arrete1.p2);
+        tri1.setNeighbor(idVoisin2, indexT1);
+
+        tri2.setNeighbor(tri1.getId(), arrete2.p2);
+        tri2.setNeighbor(idVoisin1, indexT2);
+
+        if(idVoisin1 > 0){
+            TriangleTopo& voisin = triangles[idVoisin1 - 1];
+            for(int i = 0; i < 3; i++) {
+                if (voisin.getNeighbor(i) == tri1.getId()){
+                    voisin.setNeighbor(tri2.getId(), i);
+                    break;
+                }
+            }
+        }
+        if(idVoisin2 > 0){
+            TriangleTopo& voisin = triangles[idVoisin2 - 1];
+            for(int i = 0; i < 3; i++) {
+                if (voisin.getNeighbor(i) == tri2.getId()){
+                    voisin.setNeighbor(tri1.getId(), i);
+                    break;
+                }
+            }
+        }
+
+        bool t1Ext = tri1.estExterieur() != -1;
+        bool t2Ext = tri2.estExterieur() != -1;
+
+        bool okt1 = false;
+        bool okt2 = false;
+
+        int t1Id = tri1.getId();
+        int t2Id = tri2.getId();
+
+        for(std::vector<int>::const_iterator it = idTriExtern.begin(); it < idTriExtern.end(); it++){
+            if((*it) == t1Id){
+                okt1 = true;
+                if(!t1Ext)
+                    idTriExtern.erase(it);
+            }
+
+            if((*it) == t2Id){
+                okt2 = true;
+                if(!t2Ext)
+                    idTriExtern.erase(it);
+            }
+            if(okt1 && okt2)
+                break;
+        }
+
+        for(int i = 0; i < 3; i++){
+            vertex[tri1.getIdSommet(i)].setIdTriangle(tri1.getId());
+            vertex[tri2.getIdSommet(i)].setIdTriangle(tri2.getId());
+        }
+
+        if(!okt1 && t1Ext)
+            idTriExtern.push_back(t1Id);
+        if(!okt2 && t2Ext)
+            idTriExtern.push_back(t2Id);
+        return true;
+    }
+
+    TriangulationDelaunay2D Triangulation2D::makeDelaunay() {
+        std::queue<int> file;
+        for(int i = 1; i < triangles.size() + 1; i++)
+            file.push(i);
+        lawson(file);
+
+        TriangulationDelaunay2D ret(*this);
+        return ret;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    TriangulationDelaunay2D::TriangulationDelaunay2D(Triangulation2D &tri) {
+        vertex.reserve(tri.getNbVertex());
+        triangles.reserve(tri.getNbFaces());
+        idTriExtern.reserve(tri.idTriExtern.size());
+
+
+        for(int i = 0; i < tri.getNbVertex(); i++)
+            vertex.addPlot(tri.vertex[i]);
+
+        for(TriangleTopo t : tri.triangles)
+            triangles.push_back(t);
+
+        for(int i : tri.idTriExtern)
+            idTriExtern.push_back(i);
+    }
 
     std::vector<float> TriangulationDelaunay2D::getVoronoi() {
         std::vector<float> ret;
@@ -472,127 +616,6 @@ namespace GeoLib{
         lawson(queue);
     }
 
-    void TriangulationDelaunay2D::lawson(std::queue<int>& file) {
-        while(file.size() > 0){
-            int top = file.front();
-            for(int k = 0; k < 3; k++) {
-                TriangleTopo triTopo = triangles[top - 1];
-                for(int l = 0; l < 3; l++){
-                    if(triTopo.getNeighbor(k) != 0) {
-                        int p = triangles[triTopo.getNeighbor(k) - 1].getIdSommet(l);
-                        if (appartientCercle(top, p) < 0.0f) {
-                            //int idTri = vertex[p].getIdTriangle();
-                            faceCirculator fc = faceAround(p);
-                            bool fin = false;
-                            do {
-                                //FAUX -> si plusieurs triangles adjacent
-                                if (getArreteAdjacent(triangles[top - 1], *(*fc)).p1 != -1 &&
-                                    (*fc)->getIndexInTriangle(p) != -1) {
-                                    //                        ok = true;
-                                    fin = true;
-                                    flipTriangle(top, (*fc)->getId());
-                                    for (int voisin = 0; voisin < 3; voisin++) {
-                                        if (triangles[top - 1].getNeighbor(voisin) >
-                                            0/* && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId()*/)
-                                            file.push(triangles[top - 1].getNeighbor(voisin));
-
-                                        if ((*fc)->getNeighbor(voisin) > 0/* && (*fc)->getNeighbor(voisin) != top*/)
-                                            file.push((*fc)->getNeighbor(voisin));
-                                    }
-                                }
-                                if (fin)
-                                    break;
-                                fc++;
-                            } while (fc != faceAround(p) || fin);
-                        }
-                    }
-                }
-            }
-            file.pop();
-        }
-    }
-
-    bool TriangulationDelaunay2D::flipTriangle(int idTri1, int idTri2) {
-            TriangleTopo& tri1 = triangles[idTri1-1];
-            TriangleTopo& tri2 = triangles[idTri2-1];
-
-            couple arrete1 = getArreteAdjacent(tri1, tri2);
-            couple arrete2 = getArreteAdjacent(tri2, tri1);
-
-            if(arrete1.p1 == -1 || arrete2.p1 == -1)
-                return false;
-
-            int indexT1 = 3 - arrete1.p1 - arrete1.p2;
-            int indexT2 = 3 - arrete2.p1 - arrete2.p2;
-
-            int idVoisin1 = tri1.getNeighbor(arrete1.p2);
-            int idVoisin2 = tri2.getNeighbor(arrete2.p2);
-
-            tri1.setIdSommet(tri2.getIdSommet(indexT2), arrete1.p1);
-            tri2.setIdSommet(tri1.getIdSommet(indexT1), arrete2.p1);
-
-            tri1.setNeighbor(tri2.getId(), arrete1.p2);
-            tri1.setNeighbor(idVoisin2, indexT1);
-
-            tri2.setNeighbor(tri1.getId(), arrete2.p2);
-            tri2.setNeighbor(idVoisin1, indexT2);
-
-            if(idVoisin1 > 0){
-                TriangleTopo& voisin = triangles[idVoisin1 - 1];
-                for(int i = 0; i < 3; i++) {
-                    if (voisin.getNeighbor(i) == tri1.getId()){
-                        voisin.setNeighbor(tri2.getId(), i);
-                        break;
-                    }
-                }
-            }
-            if(idVoisin2 > 0){
-                TriangleTopo& voisin = triangles[idVoisin2 - 1];
-                for(int i = 0; i < 3; i++) {
-                    if (voisin.getNeighbor(i) == tri2.getId()){
-                        voisin.setNeighbor(tri1.getId(), i);
-                        break;
-                    }
-                }
-            }
-
-            bool t1Ext = tri1.estExterieur() != -1;
-            bool t2Ext = tri2.estExterieur() != -1;
-
-            bool okt1 = false;
-            bool okt2 = false;
-
-            int t1Id = tri1.getId();
-            int t2Id = tri2.getId();
-
-            for(std::vector<int>::const_iterator it = idTriExtern.begin(); it < idTriExtern.end(); it++){
-                if((*it) == t1Id){
-                    okt1 = true;
-                    if(!t1Ext)
-                        idTriExtern.erase(it);
-                }
-
-                if((*it) == t2Id){
-                    okt2 = true;
-                    if(!t2Ext)
-                        idTriExtern.erase(it);
-                }
-                if(okt1 && okt2)
-                    break;
-            }
-
-            for(int i = 0; i < 3; i++){
-                vertex[tri1.getIdSommet(i)].setIdTriangle(tri1.getId());
-                vertex[tri2.getIdSommet(i)].setIdTriangle(tri2.getId());
-            }
-
-            if(!okt1 && t1Ext)
-                idTriExtern.push_back(t1Id);
-            if(!okt2 && t2Ext)
-                idTriExtern.push_back(t2Id);
-            return true;
-    }
-
     Maillage TriangulationDelaunay2D::crust() {
         Maillage ret;
         ScatterPlot SP;
@@ -600,17 +623,19 @@ namespace GeoLib{
         std::vector<unsigned int> VC;
         std::vector<float> pVoronoi = getVoronoi();
 
+        TriangulationDelaunay2D tmp(*this);
+
         for(vector3 s : vertex.getVector()){
             SP.addPlot(s);
         }
 
         for(int i = 0; i < pVoronoi.size(); i++){
-            addPoint(pVoronoi[i], pVoronoi[i+1]);
+            tmp.addPoint(pVoronoi[i], pVoronoi[i+1]);
             i++;
             i++;
         }
 
-        for(TriangleTopo t : triangles){
+        for(TriangleTopo t : tmp.triangles){
             int cpt = 0;
             for(int i = 0; i < 3; i++){
                 if(t.getIdSommet(i) < nbVertexOrig)
@@ -630,7 +655,6 @@ namespace GeoLib{
         ret.setNbIndiceFace(2);
         return ret;
     }
-
 }
 
 
