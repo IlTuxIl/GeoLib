@@ -89,6 +89,7 @@ namespace GeoLib {
          */
         vector3 computeVoronoi(vector3 a, vector3 b, vector3 c);
 
+        float computeAspectRation(vector3 a, vector3 b, vector3 c);
     private:
         bool updateVoronoi = true;
         vector3 voronoi;

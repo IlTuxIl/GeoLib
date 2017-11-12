@@ -10,22 +10,23 @@ class Framebuffer : public App {
     Framebuffer() : App(1024, 640) {}
 
     int init() {
-        tmp.loadPoint("test3.points", 3);
+        tmp.loadPoint("test.points", 3);
         tri = tmp.makeDelaunay();
         voronoMesh = tri.getVoronoiMesh();
         triangu = tri.getMaillage();
         m_camera.lookat(Point(-5, -5), Point(5, 5));
 
-//        crustMesh = tri.crust();
         std::vector<Maillage*> mesh;
         std::vector<Color> c;
 
         mesh.push_back(&triangu);
         mesh.push_back(&voronoMesh);
         mesh.push_back(&crustMesh);
+        mesh.push_back(&ruppert);
         c.push_back(Color(1,0,0));
         c.push_back(Color(0,0,1));
         c.push_back(Color(0,1,0));
+        c.push_back(Color(1,1,0));
         r = Render(mesh, c);
 
         glPointSize(20);
@@ -74,6 +75,7 @@ class Framebuffer : public App {
             update = true;
             can_add = false;
             haveToUpdateMaillage = true;
+            haveToUpdateRuppert = true;
             voronoMesh = tri.getVoronoiMesh();
             triangu = tri.getMaillage();
         }
@@ -95,11 +97,20 @@ class Framebuffer : public App {
             }
             isMaillage = true;
         }
+        if (key_state('r')){
+            if (haveToUpdateRuppert) {
+                update = true;
+                ruppert = tri.ruppert(1.5).getMaillage();
+                haveToUpdateRuppert = false;
+            }
+            isMaillage = true;
+        }
 
         std::vector<bool> affiche;
 
         affiche.push_back(!isMaillage);
         affiche.push_back(afficheVoronoi && !isMaillage);
+        affiche.push_back(isMaillage);
         affiche.push_back(isMaillage);
         r.draw(m_camera, update, affiche);
 
@@ -113,10 +124,13 @@ class Framebuffer : public App {
     TriangulationDelaunay2D tri;
     bool can_add = true;
     bool haveToUpdateMaillage = true;
+    bool haveToUpdateRuppert = true;
     bool isMaillage = false;
+
     Maillage voronoMesh;
     Maillage triangu;
     Maillage crustMesh;
+    Maillage ruppert;
 };
 
 

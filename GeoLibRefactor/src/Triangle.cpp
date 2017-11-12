@@ -108,4 +108,14 @@ namespace GeoLib {
         return voronoi;
     }
 
+    float TriangleTopo::computeAspectRation(vector3 a, vector3 b, vector3 c) {
+        float A = (b-a).length();
+        float B = (c-a).length();
+        float C = (c-b).length();
+
+        float s = (A+B+C)/2;
+
+        return (A * B * C) / (8 * (s - A) * (s - B) * (s - C));
+    }
+
 }

@@ -160,7 +160,8 @@ namespace GeoLib {
          * @return un Maillage
          */
         Maillage crust();
-      protected:
+        TriangulationDelaunay2D ruppert(float maxAspectRatio);
+    protected:
         /*!
          * @return un tableau contenant les coordonnées des sommets de voronoi
          */
@@ -173,6 +174,9 @@ namespace GeoLib {
          *  \brief surcharge de la fonction addTriangleExtern qui permet de faire du delaunay incremental
          */
         void addTriangleExtern(int idPoint);
+
+        bool checkAspectRation(int idTri, float maxAR);
+
     };
 }
 

@@ -637,16 +637,13 @@ namespace GeoLib{
 
         for(TriangleTopo t : tmp.triangles){
             int cpt = 0;
-            for(int i = 0; i < 3; i++){
+            for(int i = 0; i < 3; i++)
                 if(t.getIdSommet(i) < nbVertexOrig)
                     cpt++;
-            }
             if(cpt == 2){
-                for(int i = 0; i < 3; i++){
-                    if(t.getIdSommet(i) < nbVertexOrig){
+                for(int i = 0; i < 3; i++)
+                    if(t.getIdSommet(i) < nbVertexOrig)
                         VC.push_back(t.getIdSommet(i));
-                    }
-                }
             }
         }
 
@@ -655,6 +652,48 @@ namespace GeoLib{
         ret.setNbIndiceFace(2);
         return ret;
     }
+
+    TriangulationDelaunay2D TriangulationDelaunay2D::ruppert(float maxAspectRatio) {
+        TriangulationDelaunay2D ret(*this);
+        std::queue<int> badTri;
+        for(int i = 1; i < ret.triangles.size() + 1; i++)
+            if(checkAspectRation(i, maxAspectRatio))
+                badTri.push(i);
+
+        while(badTri.size() > 0){
+            int idTri = badTri.front();
+
+            TriangleTopo tri = ret.triangles[idTri - 1];
+            vector3 a = ret.vertex[tri.getIdSommet(0)];
+            vector3 b = ret.vertex[tri.getIdSommet(1)];
+            vector3 c = ret.vertex[tri.getIdSommet(2)];
+            vector3 vor = tri.computeVoronoi(a,b,c);
+            ret.addPoint(vor.x(), vor.y());
+
+            if(ret.checkAspectRation(idTri, maxAspectRatio))
+                badTri.push(idTri);
+            if(ret.checkAspectRation(triangles.size()-1, maxAspectRatio))
+                badTri.push(triangles.size()-1);
+            if(ret.checkAspectRation(triangles.size(), maxAspectRatio))
+                badTri.push(triangles.size());
+
+            badTri.pop();
+        }
+
+        return ret;
+    }
+
+    bool TriangulationDelaunay2D::checkAspectRation(int idTri, float maxAR) {
+        TriangleTopo t = triangles[idTri - 1];
+        vector3 a = vertex[t.getIdSommet(0)];
+        vector3 b = vertex[t.getIdSommet(1)];
+        vector3 c = vertex[t.getIdSommet(2)];
+
+        if(t.computeAspectRation(a,b,c) > maxAR)
+            return true;
+        return false;
+    }
+
 }
 
 
