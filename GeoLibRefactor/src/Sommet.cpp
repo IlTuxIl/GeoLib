@@ -36,13 +36,6 @@ namespace GeoLib{
         return *this;
     }
 
-    Sommet::Sommet(const Sommet &_sommet) {
-        val[0] = _sommet.val[0];
-        val[1] = _sommet.val[1];
-        val[2] = _sommet.val[2];
-        idTriangle = _sommet.idTriangle;
-    }
-
     Sommet Sommet::operator-(const Sommet &s) {
         return Sommet(x() - s.x(), y() - s.y(), z() - s.z());
     }

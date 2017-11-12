@@ -15,7 +15,6 @@
  * \brief Permet d'afficher un Maillage avec OpenGL3.
  * \author FLECKINGER Julien
  */
-
 namespace GeoLib {
     /*!\class Render
      * \brief Permet d'afficher un Maillage avec OpenGL3.

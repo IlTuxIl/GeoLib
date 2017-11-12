@@ -332,30 +332,6 @@ namespace GeoLib{
         }
     }
 
-    std::vector<double> Triangulation2D::getVertex(){
-        std::vector<double> ret;
-        ret.reserve(vertex.getSize() * 3);
-        for(Sommet s : vertex.getVector()){
-            ret.push_back(s.x());
-            ret.push_back(s.y());
-            ret.push_back(s.z());
-        }
-        return ret;
-    }
-
-    std::vector<unsigned int> Triangulation2D::getIndex() {
-        std::vector<unsigned int> ret;
-        ret.reserve(vertex.getSize() * 3);
-
-        for(TriangleTopo t : triangles){
-            ret.push_back((unsigned int) t.getIdSommet(1));
-            ret.push_back((unsigned int) t.getIdSommet(0));
-            ret.push_back((unsigned int) t.getIdSommet(2));
-        }
-
-        return ret;
-    }
-
     Maillage Triangulation2D::getMaillage() {
         Maillage ret;
         ScatterPlot SP;
@@ -384,6 +360,9 @@ namespace GeoLib{
         vertex[idPoint].setX(s.x() + -(epsilon/2) + p1 * epsilon);
         vertex[idPoint].setY(s.y() + -(epsilon/2) + p2 * epsilon);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     std::vector<float> TriangulationDelaunay2D::getVoronoi() {
         std::vector<float> ret;

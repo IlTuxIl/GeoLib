@@ -66,6 +66,7 @@ namespace GeoLib {
         TriangleTopo *curTriangle;
         int curIndex;
         int startIndex;
+        bool changeTriangle;
     };
 
     /*!\class vertexCirculator

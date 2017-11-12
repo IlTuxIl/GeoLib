@@ -10,8 +10,16 @@
 #include "Sommet.h"
 #include <iostream>
 
+/*!
+ * \file Vector.h
+ * \brief vector et index
+ * \author FLECKINGER Julien
+ */
 namespace GeoLib {
 
+    /*!\class vector3
+     * \brief vector3 = triplet de double
+     */
     class vector3 : public Triplet<double> {
       public:
         vector3(double x = 0, double y = 0, double z = 0);
@@ -35,6 +43,9 @@ namespace GeoLib {
         vector3 normalize();
     };
 
+    /*!\class index
+     * \brief index = triplet d'entier
+     */
     class index : public Triplet<int>{
       public:
         index(int x = 0, int y = 0, int z = 0) : Triplet(x,y,z){};

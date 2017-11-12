@@ -5,8 +5,16 @@
 #ifndef GEOALGO_TRIPLET_H
 #define GEOALGO_TRIPLET_H
 
+/*!
+ * \file Triplet.h
+ * \brief Triplet
+ * \author FLECKINGER Julien
+ */
 namespace GeoLib {
 
+    /*!\class Triplet
+     * \brief Template permettant d'avoir un triplet d'entier, double ,float ...
+     */
     template<class T>
     class Triplet {
       public:
