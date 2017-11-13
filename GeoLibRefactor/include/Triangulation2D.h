@@ -63,7 +63,7 @@ namespace GeoLib {
         /*!
          * \brief ajoute un point avec les coordonnées x,y de façon naïve.
          */
-        void addPoint(double x, double y);
+        void addPoint(double x, double y, double epsilon = 0.001);
 
         /*!
          * \brief renvoie un Maillage pour affichage de la triangulation
@@ -176,6 +176,8 @@ namespace GeoLib {
         void addTriangleExtern(int idPoint);
 
         bool checkAspectRation(int idTri, float maxAR);
+
+        bool checkAngle(int idTri, float minAngle);
 
     };
 }

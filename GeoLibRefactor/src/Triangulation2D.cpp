@@ -5,6 +5,7 @@
 #include <cmath>
 #include <map>
 #include <fstream>
+#include <stack>
 #include "Triangulation2D.h"
 
 namespace GeoLib{
@@ -62,7 +63,8 @@ namespace GeoLib{
             addPoint(i);
     }
 
-    void Triangulation2D::addPoint(double x, double y) {
+    void Triangulation2D::addPoint(double x, double y, double _epsilon) {
+        epsilon = _epsilon;
         Sommet s = vector3(x,y,0.0);
         vertex.addPlot(s);
         addPoint(vertex.getSize() - 1);
@@ -115,6 +117,8 @@ namespace GeoLib{
         p2.setZ(pow(p2.x() ,2) + pow(p2.y(), 2));
         p3.setZ(pow(p3.x() ,2) + pow(p3.y(), 2));
         s.setZ(pow(s.x() ,2) + pow(s.y(), 2));
+
+        std::cout << vector3(vector3(p2-p1).cross(p3 - p1)).dot(s-p1) << std::endl;
 
         return vector3(vector3(p2-p1).cross(p3 - p1)).dot(s-p1);
     }
@@ -364,8 +368,8 @@ namespace GeoLib{
     void Triangulation2D::lawson(std::queue<int>& file) {
         while(file.size() > 0){
             int top = file.front();
+            TriangleTopo triTopo = triangles[top - 1];
             for(int k = 0; k < 3; k++) {
-                TriangleTopo triTopo = triangles[top - 1];
                 if(triTopo.getNeighbor(k) != 0) {
                     couple tmp = getArreteAdjacent(triangles[triTopo.getNeighbor(k) - 1], triTopo);
                     int p = triangles[triTopo.getNeighbor(k) - 1].getIdSommet(3 - tmp.p1 - tmp.p2);
@@ -379,11 +383,10 @@ namespace GeoLib{
                                 fin = true;
                                 flipTriangle(top, (*fc)->getId());
                                 for (int voisin = 0; voisin < 3; voisin++) {
-                                    if (triangles[top - 1].getNeighbor(voisin) >
-                                        0/* && triangles[top - 1].getNeighbor(voisin) != (*fc)->getId()*/)
+                                    if (triangles[top - 1].getNeighbor(voisin) > 0)
                                         file.push(triangles[top - 1].getNeighbor(voisin));
 
-                                    if ((*fc)->getNeighbor(voisin) > 0/* && (*fc)->getNeighbor(voisin) != top*/)
+                                    if ((*fc)->getNeighbor(voisin) > 0)
                                         file.push((*fc)->getNeighbor(voisin));
                                 }
                             }
@@ -611,8 +614,12 @@ namespace GeoLib{
 
     void TriangulationDelaunay2D::addTriangleExtern(int idPoint) {
         std::queue<int> queue;
+
+        int nbTri = triangles.size();
+
         Triangulation2D::addTriangleExtern(idPoint);
-        queue.push(triangles.size());
+        for(int i = nbTri+1; i < triangles.size()+1; i++)
+            queue.push(i);
         lawson(queue);
     }
 
@@ -653,29 +660,30 @@ namespace GeoLib{
         return ret;
     }
 
-    TriangulationDelaunay2D TriangulationDelaunay2D::ruppert(float maxAspectRatio) {
+    TriangulationDelaunay2D TriangulationDelaunay2D::ruppert(float minAngle) {
         TriangulationDelaunay2D ret(*this);
-        std::queue<int> badTri;
+        std::stack<int> badTri;
         for(int i = 1; i < ret.triangles.size() + 1; i++)
-            if(checkAspectRation(i, maxAspectRatio))
+            if(checkAngle(i, minAngle))
                 badTri.push(i);
 
         while(badTri.size() > 0){
-            int idTri = badTri.front();
+            int idTri = badTri.top();
 
             TriangleTopo tri = ret.triangles[idTri - 1];
             vector3 a = ret.vertex[tri.getIdSommet(0)];
             vector3 b = ret.vertex[tri.getIdSommet(1)];
             vector3 c = ret.vertex[tri.getIdSommet(2)];
             vector3 vor = tri.computeVoronoi(a,b,c);
-            ret.addPoint(vor.x(), vor.y());
 
-            if(ret.checkAspectRation(idTri, maxAspectRatio))
+            ret.addPoint(vor.x(), vor.y(), 0.0);
+
+            if(ret.checkAngle(idTri, minAngle))
                 badTri.push(idTri);
-            if(ret.checkAspectRation(triangles.size()-1, maxAspectRatio))
-                badTri.push(triangles.size()-1);
-            if(ret.checkAspectRation(triangles.size(), maxAspectRatio))
-                badTri.push(triangles.size());
+            if(ret.checkAngle(ret.triangles.size()-1, minAngle))
+                badTri.push(ret.triangles.size()-1);
+            if(ret.checkAngle(ret.triangles.size(), minAngle))
+                badTri.push(ret.triangles.size());
 
             badTri.pop();
         }
@@ -689,7 +697,22 @@ namespace GeoLib{
         vector3 b = vertex[t.getIdSommet(1)];
         vector3 c = vertex[t.getIdSommet(2)];
 
-        if(t.computeAspectRation(a,b,c) > maxAR)
+        float AR = t.computeAspectRation(a,b,c);
+
+        if(AR > maxAR)
+            return true;
+        return false;
+    }
+
+    bool TriangulationDelaunay2D::checkAngle(int idTri, float minAngle) {
+        TriangleTopo t = triangles[idTri - 1];
+        vector3 a = vertex[t.getIdSommet(0)];
+        vector3 b = vertex[t.getIdSommet(1)];
+        vector3 c = vertex[t.getIdSommet(2)];
+
+        float angle = t.minAngle(a,b,c);
+        std::cout << angle << std::endl;
+        if(angle < minAngle)
             return true;
         return false;
     }

@@ -2,6 +2,7 @@
 // Created by julien on 17/10/17.
 //
 
+#include <cmath>
 #include "Triangle.h"
 namespace GeoLib {
 
@@ -116,6 +117,18 @@ namespace GeoLib {
         float s = (A+B+C)/2;
 
         return (A * B * C) / (8 * (s - A) * (s - B) * (s - C));
+    }
+
+    float TriangleTopo::minAngle(vector3 a, vector3 b, vector3 c) {
+        float A = (b-c).length();
+        float B = (c-a).length();
+        float C = (b-a).length();
+
+        float angleA = acos(((B*B) + (C*C)- (A*A)) / (2 * B * C)) * (180/3.14);
+        float angleB = acos(((C*C) + (A*A) - (B*B)) / (2 * C * A)) * (180/3.14);
+        float angleC = 180 - angleA - angleB;
+
+        return std::min(std::min(angleA, angleB), angleC);
     }
 
 }

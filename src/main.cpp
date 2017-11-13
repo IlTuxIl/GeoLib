@@ -9,9 +9,20 @@ class Framebuffer : public App {
     // constructeur : donner les dimensions de l'image, et eventuellement la version d'openGL.
     Framebuffer() : App(1024, 640) {}
 
+    void moveCam(){
+        if(key_state(SDLK_UP))         // le bouton du milieu est enfonce
+            m_camera.translation((float) 0 / (float) window_width(), (float) 50 / (float) window_height());
+        if(key_state(SDLK_DOWN))         // le bouton du milieu est enfonce
+            m_camera.translation((float) 0 / (float) window_width(), (float) -50 / (float) window_height());
+        if(key_state(SDLK_LEFT))         // le bouton du milieu est enfonce
+            m_camera.translation((float) 50 / (float) window_width(), (float) 0 / (float) window_height());
+        if(key_state(SDLK_RIGHT))         // le bouton du milieu est enfonce
+            m_camera.translation((float) -50 / (float) window_width(), (float) 0 / (float) window_height());
+    }
+
     int init() {
-        tmp.loadPoint("test.points", 3);
-        tri = tmp.makeDelaunay();
+        tri.loadPoint("bug.points", 3);
+        //tri = tmp.makeDelaunay();
         voronoMesh = tri.getVoronoiMesh();
         triangu = tri.getMaillage();
         m_camera.lookat(Point(-5, -5), Point(5, 5));
@@ -53,11 +64,13 @@ class Framebuffer : public App {
     int render() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // deplace la camera
+        moveCam();
         int mx, my, x, y;
         double dx, dy;
         bool update = false;
         bool afficheVoronoi = false;
         isMaillage = false;
+        isRuppert = false;
         unsigned int mb = SDL_GetRelativeMouseState(&mx, &my);
         SDL_GetMouseState(&x, &y);
 
@@ -100,18 +113,18 @@ class Framebuffer : public App {
         if (key_state('r')){
             if (haveToUpdateRuppert) {
                 update = true;
-                ruppert = tri.ruppert(1.5).getMaillage();
+                ruppert = tri.ruppert(20).getMaillage();
                 haveToUpdateRuppert = false;
             }
-            isMaillage = true;
+            isRuppert = true;
         }
 
         std::vector<bool> affiche;
 
-        affiche.push_back(!isMaillage);
+        affiche.push_back(!isMaillage && !isRuppert);
         affiche.push_back(afficheVoronoi && !isMaillage);
         affiche.push_back(isMaillage);
-        affiche.push_back(isMaillage);
+        affiche.push_back(isRuppert);
         r.draw(m_camera, update, affiche);
 
         return 1;
@@ -122,11 +135,11 @@ class Framebuffer : public App {
     Render r;
     Triangulation2D tmp;
     TriangulationDelaunay2D tri;
-    bool can_add = true;
+    bool can_add = false;
     bool haveToUpdateMaillage = true;
     bool haveToUpdateRuppert = true;
     bool isMaillage = false;
-
+    bool isRuppert = false;
     Maillage voronoMesh;
     Maillage triangu;
     Maillage crustMesh;
@@ -136,9 +149,9 @@ class Framebuffer : public App {
 
 int main(int argc, char **argv) {
 
-        Framebuffer tp;
-        tp.run();
+    Framebuffer tp;
+    tp.run();
 
-        return 0;
-    }
+    return 0;
+}
 
