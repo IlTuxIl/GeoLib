@@ -49,8 +49,8 @@ namespace GeoLib {
          *
          * @return le tableau complet
          */
-        std::vector<vector3> getVector(){ return plot;};
-        const std::vector<vector3> getVector() const { return plot;};
+        std::vector<vector3>& getVector(){ return plot;};
+        const std::vector<vector3>& getVector() const { return plot;};
 
     private:
         std::vector<vector3> plot;
@@ -82,7 +82,7 @@ namespace GeoLib {
         /*!
          * @return le tableau complet
          */
-        std::vector<Sommet> getVector(){ return plot;};
+        std::vector<Sommet>& getVector(){ return plot;};
 
         int getSize() const {return plot.size();}
 

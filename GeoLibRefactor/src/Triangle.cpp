@@ -109,24 +109,26 @@ namespace GeoLib {
         return voronoi;
     }
 
-    float TriangleTopo::computeAspectRation(vector3 a, vector3 b, vector3 c) {
-        float A = (b-a).length();
-        float B = (c-a).length();
-        float C = (c-b).length();
+    double TriangleTopo::computeAspectRation(vector3 a, vector3 b, vector3 c) {
+        double A = (b-a).length();
+        double B = (c-a).length();
+        double C = (c-b).length();
 
-        float s = (A+B+C)/2;
+        double s = (A+B+C)/2;
 
         return (A * B * C) / (8 * (s - A) * (s - B) * (s - C));
     }
 
-    float TriangleTopo::minAngle(vector3 a, vector3 b, vector3 c) {
-        float A = (b-c).length();
-        float B = (c-a).length();
-        float C = (b-a).length();
+    double TriangleTopo::minAngle(vector3 a, vector3 b, vector3 c) {
+        double A = (b-c).length();
+        double B = (c-a).length();
+        double C = (b-a).length();
 
-        float angleA = acos(((B*B) + (C*C)- (A*A)) / (2 * B * C)) * (180/3.14);
-        float angleB = acos(((C*C) + (A*A) - (B*B)) / (2 * C * A)) * (180/3.14);
-        float angleC = 180 - angleA - angleB;
+        double angleA = acos(((B*B) + (C*C)- (A*A)) / (2 * B * C)) * (180/3.14);
+        double angleB = acos(((C*C) + (A*A) - (B*B)) / (2 * C * A)) * (180/3.14);
+        double angleC = 180 - angleA - angleB;
+
+        //std::cout << angleA << " " << angleB << " " << angleC << " " << angleA+angleB+angleC << std::endl;
 
         return std::min(std::min(angleA, angleB), angleC);
     }

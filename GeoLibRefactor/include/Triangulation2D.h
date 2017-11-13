@@ -63,7 +63,7 @@ namespace GeoLib {
         /*!
          * \brief ajoute un point avec les coordonnées x,y de façon naïve.
          */
-        void addPoint(double x, double y, double epsilon = 0.001);
+        bool addPoint(double x, double y, double epsilon = 0.001);
 
         /*!
          * \brief renvoie un Maillage pour affichage de la triangulation
@@ -136,6 +136,8 @@ namespace GeoLib {
          * \brief flip l'arrete entre tri1 et tri2
          */
         bool flipTriangle(int idTri1, int idTri2);
+
+        bool checkRange(double x, double y, double range);
 
         ScatterVertex vertex;
         std::vector<TriangleTopo> triangles;

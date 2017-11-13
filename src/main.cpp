@@ -82,15 +82,16 @@ class Framebuffer : public App {
                                 m_camera.projection(window_width(), window_height(), 45)).inverse();
             Point res = PvpInv(Point(dx, dy));
 
-            std::cout << -res.x * (m_camera.position().z) / res.z << ", " << res.y * (m_camera.position().z) / res.z
-                      << std::endl;
-            tri.addPoint(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z);
-            update = true;
-            can_add = false;
-            haveToUpdateMaillage = true;
-            haveToUpdateRuppert = true;
-            voronoMesh = tri.getVoronoiMesh();
-            triangu = tri.getMaillage();
+            if(tri.addPoint(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z)) {
+                std::cout << -res.x * (m_camera.position().z) / res.z << ", " << res.y * (m_camera.position().z) / res.z
+                          << std::endl;
+                update = true;
+                can_add = false;
+                haveToUpdateMaillage = true;
+                haveToUpdateRuppert = true;
+                voronoMesh = tri.getVoronoiMesh();
+                triangu = tri.getMaillage();
+            }
         }
         if (mb & SDL_BUTTON(3))         // le bouton droit est enfonce
             m_camera.move(mx);

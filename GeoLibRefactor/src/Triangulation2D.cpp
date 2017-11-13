@@ -63,11 +63,15 @@ namespace GeoLib{
             addPoint(i);
     }
 
-    void Triangulation2D::addPoint(double x, double y, double _epsilon) {
+    bool Triangulation2D::addPoint(double x, double y, double _epsilon) {
         epsilon = _epsilon;
-        Sommet s = vector3(x,y,0.0);
-        vertex.addPlot(s);
-        addPoint(vertex.getSize() - 1);
+        if(checkRange(x, y, 0.05)) {
+            Sommet s = vector3(x, y, 0.0);
+            vertex.addPlot(s);
+            addPoint(vertex.getSize() - 1);
+            return true;
+        }
+        return false;
     }
 
     void Triangulation2D::addPoint(int idPoint) {
@@ -117,8 +121,6 @@ namespace GeoLib{
         p2.setZ(pow(p2.x() ,2) + pow(p2.y(), 2));
         p3.setZ(pow(p3.x() ,2) + pow(p3.y(), 2));
         s.setZ(pow(s.x() ,2) + pow(s.y(), 2));
-
-        std::cout << vector3(vector3(p2-p1).cross(p3 - p1)).dot(s-p1) << std::endl;
 
         return vector3(vector3(p2-p1).cross(p3 - p1)).dot(s-p1);
     }
@@ -492,6 +494,17 @@ namespace GeoLib{
         return ret;
     }
 
+    bool Triangulation2D::checkRange(double x, double y, double range) {
+        vector3 newPoint(x,y,0);
+        for(Sommet s : vertex.getVector()){
+            vector3 p(s.x(), s.y(), 0.0);
+            if((newPoint - p).length() < range){
+                return false;
+            }
+        }
+        return true;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -669,7 +682,7 @@ namespace GeoLib{
 
         while(badTri.size() > 0){
             int idTri = badTri.top();
-
+            int nbTri = ret.triangles.size();
             TriangleTopo tri = ret.triangles[idTri - 1];
             vector3 a = ret.vertex[tri.getIdSommet(0)];
             vector3 b = ret.vertex[tri.getIdSommet(1)];
@@ -680,10 +693,10 @@ namespace GeoLib{
 
             if(ret.checkAngle(idTri, minAngle))
                 badTri.push(idTri);
-            if(ret.checkAngle(ret.triangles.size()-1, minAngle))
-                badTri.push(ret.triangles.size()-1);
-            if(ret.checkAngle(ret.triangles.size(), minAngle))
-                badTri.push(ret.triangles.size());
+
+            for(int i = nbTri + 1; i < ret.triangles.size() + 1; i++)
+                if(ret.checkAngle(i, minAngle))
+                    badTri.push(i);
 
             badTri.pop();
         }
@@ -711,7 +724,7 @@ namespace GeoLib{
         vector3 c = vertex[t.getIdSommet(2)];
 
         float angle = t.minAngle(a,b,c);
-        std::cout << angle << std::endl;
+        //std::cout << angle << std::endl;
         if(angle < minAngle)
             return true;
         return false;
