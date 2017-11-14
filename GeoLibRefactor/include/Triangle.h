@@ -91,7 +91,8 @@ namespace GeoLib {
 
         double computeAspectRation(vector3 a, vector3 b, vector3 c);
 
-        double minAngle(vector3 a, vector3 b, vector3 c);
+        double minAngle(vector3 a, vector3 b, vector3 c)const;
+        double maxAngle(vector3 a, vector3 b, vector3 c)const;
 
     private:
         bool updateVoronoi = true;

@@ -21,23 +21,28 @@ class Framebuffer : public App {
     }
 
     int init() {
-        tri.loadPoint("bug.points", 3);
+        ruppert2.setNbIndiceFace(2);
+        tri.loadPoint("test.points", 3);
         //tri = tmp.makeDelaunay();
         voronoMesh = tri.getVoronoiMesh();
         triangu = tri.getMaillage();
         m_camera.lookat(Point(-5, -5), Point(5, 5));
 
-        std::vector<Maillage*> mesh;
+        std::vector<Maillage *> mesh;
         std::vector<Color> c;
 
         mesh.push_back(&triangu);
         mesh.push_back(&voronoMesh);
         mesh.push_back(&crustMesh);
         mesh.push_back(&ruppert);
+        mesh.push_back(&ruppert2);
+        mesh.push_back(&ruppert3);
         c.push_back(Color(1,0,0));
         c.push_back(Color(0,0,1));
         c.push_back(Color(0,1,0));
         c.push_back(Color(1,1,0));
+        c.push_back(Color(0,1,1));
+        c.push_back(Color(1,0,0));
         r = Render(mesh, c);
 
         glPointSize(20);
@@ -60,6 +65,68 @@ class Framebuffer : public App {
         return 0;
     }
 
+    bool fctRuppert(){
+        int mx, my, x, y;
+        double dx, dy;
+        bool update = false;
+        unsigned int mb = SDL_GetRelativeMouseState(&mx, &my);
+        SDL_GetMouseState(&x, &y);
+        isRuppert = false;
+        dx = x;
+        dy = y;
+        if (mb && SDL_BUTTON(1) && can_add) {              // le bouton gauche est enfonce
+            Transform PvpInv = (Viewport(window_width(), window_height()) *
+                                m_camera.projection(window_width(), window_height(), 45)).inverse();
+            Point res = PvpInv(Point(dx, dy));
+            vector3 point(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z);
+//            std::cout << "pointsRuppert.addPlot(vector3(" << point.x() << ", " << point.y() << "));"<< std::endl;
+            pointsRuppert.addPlot(point);
+            if(nbpointRuppert > 1 && !changeForme) {
+                containtesRuppert.push_back((unsigned int) nbpointRuppert-1);
+                containtesRuppert.push_back((unsigned int) nbpointRuppert);
+            }
+            else if(nbpointRuppert == 1){
+                containtesRuppert.push_back(0);
+                containtesRuppert.push_back(1);
+            }
+            update = true;
+            nbpointRuppert++;
+            can_add = false;
+            changeForme = false;
+            haveToUpdateRuppert = true;
+        }
+
+        if (key_state(' '))
+            can_add = true;
+        if (key_state('p') && can_add) {
+            ruppertMode = false;
+            can_add = false;
+        }
+        if (key_state('r')) {
+            if (haveToUpdateRuppert) {
+                update = true;
+                ruppert3 = tri.ruppert(pointsRuppert.getVector(), containtesRuppert, 25).getMaillage();
+                haveToUpdateRuppert = false;
+            }
+            isRuppert = true;
+        }
+        if(key_state('n') && can_add){
+            containtesRuppert.push_back((unsigned  int)nbpointRuppert-1);
+            containtesRuppert.push_back((unsigned  int)idDebutForme);
+            idDebutForme = nbpointRuppert;
+            update = true;
+            can_add = false;
+            changeForme = true;
+        }
+        if (key_state('v'))
+            update = true;
+        if(update) {
+            ruppert2.setVertexBuffer(pointsRuppert);
+            ruppert2.setIndiceBuffer(containtesRuppert);
+        }
+        return update;
+    }
+
     // dessiner une nouvelle image
     int render() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -76,56 +143,65 @@ class Framebuffer : public App {
 
         dx = x;
         dy = y;
-
-        if (mb && SDL_BUTTON(1) && can_add) {              // le bouton gauche est enfonce
-            Transform PvpInv = (Viewport(window_width(), window_height()) *
-                                m_camera.projection(window_width(), window_height(), 45)).inverse();
-            Point res = PvpInv(Point(dx, dy));
-
-            if(tri.addPoint(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z)) {
-                std::cout << -res.x * (m_camera.position().z) / res.z << ", " << res.y * (m_camera.position().z) / res.z
-                          << std::endl;
-                update = true;
-                can_add = false;
-                haveToUpdateMaillage = true;
-                haveToUpdateRuppert = true;
-                voronoMesh = tri.getVoronoiMesh();
-                triangu = tri.getMaillage();
-            }
-        }
         if (mb & SDL_BUTTON(3))         // le bouton droit est enfonce
             m_camera.move(mx);
         else if (mb & SDL_BUTTON(2))         // le bouton du milieu est enfonce
             m_camera.translation((float) mx / (float) window_width(), (float) my / (float) window_height());
 
-        if (key_state(' ')) {
-            can_add = true;
-        }
-        if (key_state('v'))
-            afficheVoronoi = true;
-        if (key_state('m')){
-            if (haveToUpdateMaillage) {
-                update = true;
-                crustMesh = tri.crust();
-                haveToUpdateMaillage = false;
-            }
-            isMaillage = true;
-        }
-        if (key_state('r')){
-            if (haveToUpdateRuppert) {
-                update = true;
-                ruppert = tri.ruppert(20).getMaillage();
-                haveToUpdateRuppert = false;
-            }
-            isRuppert = true;
-        }
+        if(!ruppertMode){
+            if (mb && SDL_BUTTON(1) && can_add) {              // le bouton gauche est enfonce
+                Transform PvpInv = (Viewport(window_width(), window_height()) *
+                                    m_camera.projection(window_width(), window_height(), 45)).inverse();
+                Point res = PvpInv(Point(dx, dy));
 
+                if (tri.addPoint(-res.x * (m_camera.position().z) / res.z, res.y * (m_camera.position().z) / res.z)) {
+                    std::cout << -res.x * (m_camera.position().z) / res.z << ", " << res.y * (m_camera.position().z) / res.z
+                              << std::endl;
+                    update = true;
+                    can_add = false;
+                    haveToUpdateMaillage = true;
+                    haveToUpdateRuppert = true;
+                    voronoMesh = tri.getVoronoiMesh();
+                    triangu = tri.getMaillage();
+                }
+            }
+
+            if (key_state(' '))
+                can_add = true;
+            if (key_state('v'))
+                afficheVoronoi = true;
+            if (key_state('p') && can_add) {
+                ruppertMode = true;
+                can_add = false;
+            }
+            if (key_state('m')) {
+                if (haveToUpdateMaillage) {
+                    update = true;
+                    crustMesh = tri.crust();
+                    haveToUpdateMaillage = false;
+                }
+                isMaillage = true;
+            }
+            if (key_state('r')) {
+                if (haveToUpdateRuppert) {
+                    update = true;
+                    ruppert = tri.ruppert(20).getMaillage();
+                    haveToUpdateRuppert = false;
+                }
+                isRuppert = true;
+            }
+        }
+        else{
+            update = fctRuppert();
+        }
         std::vector<bool> affiche;
 
-        affiche.push_back(!isMaillage && !isRuppert);
-        affiche.push_back(afficheVoronoi && !isMaillage);
-        affiche.push_back(isMaillage);
-        affiche.push_back(isRuppert);
+        affiche.push_back(!isMaillage && !isRuppert && !ruppertMode);
+        affiche.push_back(afficheVoronoi && !isMaillage && !ruppertMode);
+        affiche.push_back(isMaillage && !ruppertMode);
+        affiche.push_back(isRuppert && !ruppertMode);
+        affiche.push_back(ruppertMode && !isRuppert);
+        affiche.push_back(ruppertMode && isRuppert);
         r.draw(m_camera, update, affiche);
 
         return 1;
@@ -141,10 +217,19 @@ class Framebuffer : public App {
     bool haveToUpdateRuppert = true;
     bool isMaillage = false;
     bool isRuppert = false;
+    bool changeForme = false;
+    bool afficheRuppert = false;
     Maillage voronoMesh;
     Maillage triangu;
     Maillage crustMesh;
     Maillage ruppert;
+    Maillage ruppert2;
+    Maillage ruppert3;
+    ScatterPlot pointsRuppert;
+    std::vector<unsigned int> containtesRuppert;
+    int nbpointRuppert = 0;
+    int idDebutForme = 0;
+    bool ruppertMode = true;
 };
 
 

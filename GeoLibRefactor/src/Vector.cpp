@@ -33,6 +33,10 @@ namespace GeoLib{
         return vector3(x() - vec.x(), y() - vec.y(), z() - vec.z());
     }
 
+    vector3 vector3::operator-(const vector3& vec) const {
+        return vector3(x() - vec.x(), y() - vec.y(), z() - vec.z());
+    }
+
     vector3 vector3::operator*(float k) {
         return vector3(x() * k, y() * k, z() * k);
     }

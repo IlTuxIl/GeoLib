@@ -95,6 +95,8 @@ namespace GeoLib {
     }
 
     int TriangleTopo::getNeighbor(int id) const {
+        if(id == -1)
+            return idVoisin[2];
         return idVoisin[id%3];
     }
 
@@ -119,7 +121,7 @@ namespace GeoLib {
         return (A * B * C) / (8 * (s - A) * (s - B) * (s - C));
     }
 
-    double TriangleTopo::minAngle(vector3 a, vector3 b, vector3 c) {
+    double TriangleTopo::minAngle(vector3 a, vector3 b, vector3 c) const{
         double A = (b-c).length();
         double B = (c-a).length();
         double C = (b-a).length();
@@ -133,4 +135,17 @@ namespace GeoLib {
         return std::min(std::min(angleA, angleB), angleC);
     }
 
+    double TriangleTopo::maxAngle(vector3 a, vector3 b, vector3 c) const{
+        double A = (b-c).length();
+        double B = (c-a).length();
+        double C = (b-a).length();
+
+        double angleA = acos(((B*B) + (C*C)- (A*A)) / (2 * B * C)) * (180/3.14);
+        double angleB = acos(((C*C) + (A*A) - (B*B)) / (2 * C * A)) * (180/3.14);
+        double angleC = 180 - angleA - angleB;
+
+        //std::cout << angleA << " " << angleB << " " << angleC << " " << angleA+angleB+angleC << std::endl;
+
+        return std::max(std::max(angleA, angleB), angleC);
+    }
 }

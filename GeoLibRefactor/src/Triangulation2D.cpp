@@ -6,6 +6,8 @@
 #include <map>
 #include <fstream>
 #include <stack>
+#include <set>
+#include <algorithm>
 #include "Triangulation2D.h"
 
 namespace GeoLib{
@@ -63,9 +65,9 @@ namespace GeoLib{
             addPoint(i);
     }
 
-    bool Triangulation2D::addPoint(double x, double y, double _epsilon) {
+    bool Triangulation2D::addPoint(double x, double y, double _epsilon, double minRange) {
         epsilon = _epsilon;
-        if(checkRange(x, y, 0.05)) {
+        if(checkRange(x, y, minRange)) {
             Sommet s = vector3(x, y, 0.0);
             vertex.addPlot(s);
             addPoint(vertex.getSize() - 1);
@@ -76,16 +78,41 @@ namespace GeoLib{
 
     void Triangulation2D::addPoint(int idPoint) {
         perturbe(idPoint);
+        if (getNbVertex() > 3) {
         int estDans = appartientMesh(idPoint);
         if (estDans != -1) {
             addTriangleIntern(estDans, idPoint);
-        }
-        else{
+        } else {
             addTriangleExtern(idPoint);
         }
 
-        for(int i = 0; i < idTriExtern.size(); i++)
+        for (int i = 0; i < idTriExtern.size(); i++)
             checkExterieur(idTriExtern[i]);
+        }
+        else if(getNbVertex() == 3){
+            if(estTrigo((vertex[0] - vertex[1]), (vertex[0] - vertex[2]))){
+                TriangleTopo t(0,1,2,1);
+                t.setNeighbor(0, 0);
+                t.setNeighbor(0, 1);
+                t.setNeighbor(0, 2);
+                vertex[0].setIdTriangle(1);
+                vertex[1].setIdTriangle(1);
+                vertex[2].setIdTriangle(1);
+                triangles.push_back(t);
+                idTriExtern.push_back(t.getId());
+            }
+            else{
+                TriangleTopo t(0,2,1,1);
+                t.setNeighbor(0, 0);
+                t.setNeighbor(0, 1);
+                t.setNeighbor(0, 2);
+                vertex[0].setIdTriangle(1);
+                vertex[1].setIdTriangle(1);
+                vertex[2].setIdTriangle(1);
+                triangles.push_back(t);
+                idTriExtern.push_back(t.getId());
+            }
+        }
     }
 
     bool Triangulation2D::appartientTriangle(int idTri, int idPoint) const {
@@ -704,6 +731,69 @@ namespace GeoLib{
         return ret;
     }
 
+
+
+    TriangulationDelaunay2D TriangulationDelaunay2D::ruppert(std::vector<vector3> points, std::vector<unsigned int> contraintes, float minAngle) {
+        TriangulationDelaunay2D ret;
+        std::vector<int> badTri;
+
+        for(vector3 v : points)
+            ret.addPoint(v.x(), v.y());
+
+        ret.checkContraintes(contraintes);
+        for(int i = 1; i < ret.triangles.size() + 1; i++)
+            if(ret.checkAngle(i, minAngle))
+                badTri.push_back(i);
+
+        int compteur = 0;
+        while(badTri.size() > 0/* && compteur < 10*/) {
+            compteur++;
+            std::sort(badTri.begin(), badTri.end(), ret);
+            bool flag = false;
+            int idTri = badTri[badTri.size()-1];
+            int nbTri = ret.triangles.size();
+            badTri.pop_back();
+            if(ret.checkAngle(idTri, minAngle)) {
+                TriangleTopo tri = ret.triangles[idTri - 1];
+                vector3 a = ret.vertex[tri.getIdSommet(0)];
+                vector3 b = ret.vertex[tri.getIdSommet(1)];
+                vector3 c = ret.vertex[tri.getIdSommet(2)];
+                vector3 vor = tri.computeVoronoi(a, b, c);
+
+                for (int ctr = 0; ctr < contraintes.size(); ctr += 2) {
+                    if (ret.estDansCercleDiametrale(contraintes[ctr], contraintes[ctr + 1], vor)) {
+                        flag = true;
+                        vector3 v1 = ret.vertex[contraintes[ctr]];
+                        vector3 v2 = ret.vertex[contraintes[ctr + 1]];
+                        vector3 mid = (v1 + v2) / 2;
+                        ret.addPoint(mid.x(), mid.y(), 0.01, 0.01);
+                        int tmp = contraintes[ctr+1];
+                        contraintes[ctr+1] = ret.vertex.getSize()-1;
+                        contraintes.push_back(ret.vertex.getSize()-1);
+                        contraintes.push_back((unsigned int) tmp);
+
+                        if (ret.checkAngle(idTri, minAngle))
+                            badTri.push_back(idTri);
+                        for (int i = nbTri + 1; i < ret.triangles.size() + 1; i++)
+                            if (ret.checkAngle(i, minAngle))
+                                badTri.push_back(i);
+                    }
+                }
+
+                if (!flag) {
+                    ret.addPoint(vor.x(), vor.y(), 0.01, 0.01);
+                    if (ret.checkAngle(idTri, minAngle))
+                        badTri.push_back(idTri);
+                    for (int i = nbTri + 1; i < ret.triangles.size() + 1; i++)
+                        if (ret.checkAngle(i, minAngle))
+                            badTri.push_back(i);
+                }
+            }
+        }
+        ret.checkContraintes(contraintes);
+        return ret;
+    }
+
     bool TriangulationDelaunay2D::checkAspectRation(int idTri, float maxAR) {
         TriangleTopo t = triangles[idTri - 1];
         vector3 a = vertex[t.getIdSommet(0)];
@@ -723,11 +813,70 @@ namespace GeoLib{
         vector3 b = vertex[t.getIdSommet(1)];
         vector3 c = vertex[t.getIdSommet(2)];
 
-        float angle = t.minAngle(a,b,c);
-        //std::cout << angle << std::endl;
+        double angle = t.minAngle(a,b,c);
+        double maxAngle = t.maxAngle(a,b,c);
+
+//        std::cout << angle << " " << maxAngle << std::endl;
+
+        if(maxAngle > 170.0 || angle < 8.0)
+            return false;
         if(angle < minAngle)
             return true;
         return false;
+    }
+
+    bool TriangulationDelaunay2D::estDansCercleDiametrale(int p1, int p2, vector3 point) const {
+        vector3 s1 = vertex[p1];
+        vector3 s2 = vertex[p2];
+        vector3 mid = (s2+s1)/2;
+        double rayon = (mid-s1).length();
+
+        return (point - mid).length() < rayon;
+    }
+
+    void TriangulationDelaunay2D::checkContraintes(std::vector<unsigned int>& contraintes) {
+        for(int idContraintes = 0; idContraintes < contraintes.size(); idContraintes+=2){
+            bool flag = false;
+            int A = contraintes[idContraintes];
+            int B = contraintes[idContraintes+1];
+
+            faceCirculator fc = faceAround(A);
+            do{
+                for(int i = 0; i < 3; i++){
+                    if((*fc)->getIdSommet(i) == B){
+                        flag = true;
+                        break;
+                    }
+                }
+                fc++;
+            }while(fc != faceAround(A) && !flag);
+            if(!flag){
+                vector3 v1 = vertex[A];
+                vector3 v2 = vertex[B];
+                vector3 mid = (v1+v2)/2;
+                addPoint(mid.x(), mid.y(), 0.01, 0.0);
+                contraintes[idContraintes+1] = vertex.getSize()-1;
+                contraintes.push_back(vertex.getSize()-1);
+                contraintes.push_back((unsigned int) B);
+                idContraintes -= 2;
+            }
+        }
+    }
+
+    bool TriangulationDelaunay2D::operator()(int _t1, int _t2){
+        TriangleTopo t = triangles[_t1 - 1];
+        vector3 a = vertex[t.getIdSommet(0)];
+        vector3 b = vertex[t.getIdSommet(1)];
+        vector3 c = vertex[t.getIdSommet(2)];
+        float angle1 = t.minAngle(a,b,c);
+
+        TriangleTopo t2 = triangles[_t2 - 1];
+        vector3 a2 = vertex[t2.getIdSommet(0)];
+        vector3 b2 = vertex[t2.getIdSommet(1)];
+        vector3 c2 = vertex[t2.getIdSommet(2)];
+        float angle2 = t.minAngle(a2,b2,c2);
+
+        return angle1 > angle2;
     }
 
 }

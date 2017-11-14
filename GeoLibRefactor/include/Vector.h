@@ -27,6 +27,7 @@ namespace GeoLib {
         vector3(const Sommet& s);
 
         vector3 operator+(const vector3&);
+        vector3 operator-(const vector3&)const;
         vector3 operator-(const vector3&);
         vector3 operator*(float);
         vector3 operator/(float);

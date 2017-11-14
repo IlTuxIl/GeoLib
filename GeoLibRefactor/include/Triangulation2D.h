@@ -63,7 +63,7 @@ namespace GeoLib {
         /*!
          * \brief ajoute un point avec les coordonnées x,y de façon naïve.
          */
-        bool addPoint(double x, double y, double epsilon = 0.001);
+        bool addPoint(double x, double y, double epsilon = 0.001, double rangeMin = 0.05);
 
         /*!
          * \brief renvoie un Maillage pour affichage de la triangulation
@@ -162,7 +162,9 @@ namespace GeoLib {
          * @return un Maillage
          */
         Maillage crust();
-        TriangulationDelaunay2D ruppert(float maxAspectRatio);
+        TriangulationDelaunay2D ruppert(float minAngle);
+        TriangulationDelaunay2D ruppert(std::vector<vector3> points, std::vector<unsigned int> contraintes, float minAngle);
+        bool operator()(int t1, int t2);
     protected:
         /*!
          * @return un tableau contenant les coordonnées des sommets de voronoi
@@ -180,6 +182,12 @@ namespace GeoLib {
         bool checkAspectRation(int idTri, float maxAR);
 
         bool checkAngle(int idTri, float minAngle);
+
+        bool estDansCercleDiametrale(int p1, int p2, vector3 idPoint) const;
+
+        void checkContraintes(std::vector<unsigned int>& contraintes);
+
+        bool trieMinAngle(int t1, int t2) const;
 
     };
 }
