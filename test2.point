@@ -1,0 +1,24 @@
+pointsRuppert.addPlot(vector3(0.0, 0.0));
+pointsRuppert.addPlot(vector3(0.5, 0.0));
+pointsRuppert.addPlot(vector3(0.5, 0.25));
+pointsRuppert.addPlot(vector3(0.7, 0.25));
+pointsRuppert.addPlot(vector3(0.7, 0.0));
+pointsRuppert.addPlot(vector3(1.0, 0.0));
+
+pointsRuppert.addPlot(vector3(1.0, 1.0));
+pointsRuppert.addPlot(vector3(0.7, 1.0));
+pointsRuppert.addPlot(vector3(0.7, 0.75));
+pointsRuppert.addPlot(vector3(0.5, 0.75));
+pointsRuppert.addPlot(vector3(0.5, 1.0));
+pointsRuppert.addPlot(vector3(0.0, 1.0));
+pointsRuppert.addPlot(vector3(0.0, 0.0));
+
+nbpointRuppert = 13;
+idDebutForme = 14;
+
+for (int i = 0; i < 12; i++) {
+    containtesRuppert.push_back((unsigned int) i);
+    containtesRuppert.push_back((unsigned int) i+1);
+}
+containtesRuppert.push_back(12);
+containtesRuppert.push_back(0);

@@ -766,7 +766,7 @@ namespace GeoLib{
                         vector3 v1 = ret.vertex[contraintes[ctr]];
                         vector3 v2 = ret.vertex[contraintes[ctr + 1]];
                         vector3 mid = (v1 + v2) / 2;
-                        ret.addPoint(mid.x(), mid.y(), 0.01, 0.01);
+                        ret.addPoint(mid.x(), mid.y(), 0.01);
                         int tmp = contraintes[ctr+1];
                         contraintes[ctr+1] = ret.vertex.getSize()-1;
                         contraintes.push_back(ret.vertex.getSize()-1);
@@ -781,12 +781,20 @@ namespace GeoLib{
                 }
 
                 if (!flag) {
-                    ret.addPoint(vor.x(), vor.y(), 0.01, 0.01);
-                    if (ret.checkAngle(idTri, minAngle))
-                        badTri.push_back(idTri);
-                    for (int i = nbTri + 1; i < ret.triangles.size() + 1; i++)
-                        if (ret.checkAngle(i, minAngle))
-                            badTri.push_back(i);
+
+                    //if(vor.length((a+b+c)/3))
+                    if((vor- (a+b+c)/3).length() < 10) {
+
+                        ret.addPoint(vor.x(), vor.y(), 0.01);
+                        if (ret.checkAngle(idTri, minAngle))
+                            badTri.push_back(idTri);
+                        for (int i = nbTri + 1; i < ret.triangles.size() + 1; i++)
+                            if (ret.checkAngle(i, minAngle))
+                                badTri.push_back(i);
+                    }
+                    else{
+                        std::cout << (vor - (a + b + c) / 3).length() << std::endl;
+                    }
                 }
             }
         }
@@ -818,7 +826,7 @@ namespace GeoLib{
 
 //        std::cout << angle << " " << maxAngle << std::endl;
 
-        if(maxAngle > 170.0 || angle < 8.0)
+        if(maxAngle > 170.0 || angle < 6.0)
             return false;
         if(angle < minAngle)
             return true;
@@ -854,7 +862,7 @@ namespace GeoLib{
                 vector3 v1 = vertex[A];
                 vector3 v2 = vertex[B];
                 vector3 mid = (v1+v2)/2;
-                addPoint(mid.x(), mid.y(), 0.01, 0.0);
+                addPoint(mid.x(), mid.y());
                 contraintes[idContraintes+1] = vertex.getSize()-1;
                 contraintes.push_back(vertex.getSize()-1);
                 contraintes.push_back((unsigned int) B);
