@@ -870,7 +870,7 @@ namespace GeoLib{
             }
         }
     }
-
+//
     bool TriangulationDelaunay2D::operator()(int _t1, int _t2){
         TriangleTopo t = triangles[_t1 - 1];
         vector3 a = vertex[t.getIdSommet(0)];

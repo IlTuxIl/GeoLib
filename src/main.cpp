@@ -30,35 +30,29 @@ class Framebuffer : public App {
 
         std::vector<Maillage *> mesh;
         std::vector<Color> c;
-//        pointsRuppert.addPlot(vector3(-4.3934, 3.66117));
-//        pointsRuppert.addPlot(vector3(-6.09584, -4.21468e-07));
-//        pointsRuppert.addPlot(vector3(-2.65434, -1.35463));
-//        pointsRuppert.addPlot(vector3(-2.17839, -3.62455));
-//        pointsRuppert.addPlot(vector3(1.8672, -3.80761));
-//
-//        pointsRuppert.addPlot(vector3(3.11199, -1.28141));
-//        pointsRuppert.addPlot(vector3(4.75952, 2.25162));
-//        pointsRuppert.addPlot(vector3(-1.46447, 2.78249));
-//        pointsRuppert.addPlot(vector3(-2.37976, -0.3112));
-//        pointsRuppert.addPlot(vector3(1.33633, -1.53769));
-//
-//        pointsRuppert.addPlot(vector3(2.70926, 1.2631));
-//        nbpointRuppert = 11;
-//        idDebutForme = 11;
-//
-//        for (int i = 0; i < 6; i++) {
-//            containtesRuppert.push_back((unsigned int) i);
-//            containtesRuppert.push_back((unsigned int) i+1);
-//        }
-//        containtesRuppert.push_back(6);
-//        containtesRuppert.push_back(0);
-//        for (int i = 7; i < 10; i++) {
-//            containtesRuppert.push_back((unsigned int) i);
-//            containtesRuppert.push_back((unsigned int) i+1);
-//        }
-//        containtesRuppert.push_back(10);
-//        containtesRuppert.push_back(7);
+        pointsRuppert.addPlot(vector3(-1.94042, 2.56282));
+        pointsRuppert.addPlot(vector3(-1.75736, 0.201363));
+        pointsRuppert.addPlot(vector3(0.384423, -0.951904));
+        pointsRuppert.addPlot(vector3(0.512564, -1.20819));
+        pointsRuppert.addPlot(vector3(-1.01665, -1.99534));
+        pointsRuppert.addPlot(vector3(-0.237975, -2.8191));
+        pointsRuppert.addPlot(vector3(0.988515, -2.91063));
+        pointsRuppert.addPlot(vector3(2.32484, -2.58112));
+        pointsRuppert.addPlot(vector3(2.98385, -0.128142));
+        pointsRuppert.addPlot(vector3(2.01364, 2.32484));
+        pointsRuppert.addPlot(vector3(1.53769, -0.43934));
+        pointsRuppert.addPlot(vector3(0.842069, 0.366116));
+        pointsRuppert.addPlot(vector3(1.22649, 2.67265));
 
+        nbpointRuppert = 13;
+        idDebutForme = 14;
+
+        for (int i = 0; i < 12; i++) {
+            containtesRuppert.push_back((unsigned int) i);
+            containtesRuppert.push_back((unsigned int) i+1);
+        }
+        containtesRuppert.push_back(12);
+        containtesRuppert.push_back(0);
         mesh.push_back(&triangu);
         mesh.push_back(&voronoMesh);
         mesh.push_back(&crustMesh);
